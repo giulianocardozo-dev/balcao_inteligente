@@ -1,0 +1,346 @@
+import { useState } from 'react';
+import {
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Clock,
+  Hand,
+  Info,
+  ShoppingCart,
+  TrendingUp,
+} from 'lucide-react';
+import { EvaluatedMaterial, TrafficLightStatus } from '../types/inventory';
+import {
+  formatBRLWhole,
+  formatPercentSigned,
+  formatQty,
+} from '../utils/mathEngine';
+import { STATUS_META, StatusChip } from './StatusVisuals';
+
+interface TodayScreenProps {
+  items: EvaluatedMaterial[];
+  onSelectMaterial: (materialId: string) => void;
+}
+
+const WELCOME_STORAGE_KEY = 'balcao_inteligente_welcome_open_v1';
+
+export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
+  const [filterStatus, setFilterStatus] = useState<TrafficLightStatus | 'ALL'>('ALL');
+  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem(WELCOME_STORAGE_KEY);
+      return saved === null ? true : saved === 'true';
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleWelcome = () => {
+    setShowWelcome((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(WELCOME_STORAGE_KEY, String(next));
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  };
+
+  const countComprar = items.filter((i) => i.status === 'COMPRAR_AGORA').length;
+  const countAntecipar = items.filter((i) => i.status === 'ANTECIPAR_COMPRA').length;
+  const countNaoComprar = items.filter((i) => i.status === 'NAO_COMPRAR').length;
+  const countAguardar = items.filter((i) => i.status === 'AGUARDAR').length;
+
+  const totalDinheiroParado = items.reduce((acc, i) => acc + i.dinheiroParado, 0);
+  const totalEconomia45d = items.reduce((acc, i) => acc + i.economiaEstimada, 0);
+
+  const visibleItems =
+    filterStatus === 'ALL'
+      ? items
+      : items.filter((i) => i.status === filterStatus);
+
+  const toggleFilter = (target: TrafficLightStatus) => {
+    setFilterStatus((prev) => (prev === target ? 'ALL' : target));
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Card de Boas-vindas */}
+      <section
+        aria-label="Guia rápido do balcão"
+        className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-2xl overflow-hidden"
+      >
+        <button
+          type="button"
+          onClick={toggleWelcome}
+          aria-expanded={showWelcome}
+          className="w-full min-h-[48px] px-4 py-3 flex items-center justify-between gap-2 text-left hover:bg-[#F1F5F9]/60 transition-colors"
+        >
+          <span className="inline-flex items-center gap-2 min-w-0">
+            <Info className="w-5 h-5 text-[#1D4ED8] shrink-0" aria-hidden="true" />
+            <span className="text-[16px] font-extrabold text-[#0F172A] truncate">
+              Bem-vindo! Como ler este painel
+            </span>
+          </span>
+          <span className="inline-flex items-center gap-1 text-[13px] font-bold text-[#1D4ED8] shrink-0">
+            <span>{showWelcome ? 'Ocultar' : 'Abrir'}</span>
+            {showWelcome ? (
+              <ChevronUp className="w-4 h-4" aria-hidden="true" />
+            ) : (
+              <ChevronDown className="w-4 h-4" aria-hidden="true" />
+            )}
+          </span>
+        </button>
+
+        {showWelcome && (
+          <div className="px-4 pb-4 pt-1 border-t border-[#E2E8F0] space-y-3 text-[15px] text-[#334155] leading-snug">
+            <p className="font-medium text-[#0F172A]">
+              Bata o olho nas cores do semáforo para saber o que fazer hoje no depósito:
+            </p>
+
+            <ul className="space-y-2 text-[14px]">
+              <li className="flex items-start gap-2">
+                <span className="w-3 h-3 rounded-sm bg-[#15803D] shrink-0 mt-1.5" aria-hidden="true" />
+                <span>
+                  <strong className="text-[#15803D]">Comprar agora:</strong> estoque baixou no pátio — peça hoje para não faltar pro cliente.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-3 h-3 rounded-sm bg-[#B45309] shrink-0 mt-1.5" aria-hidden="true" />
+                <span>
+                  <strong className="text-[#B45309]">Antecipar compra:</strong> ainda tem no pátio, mas o preço vai subir antes da próxima entrega.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-3 h-3 rounded-sm bg-[#B91C1C] shrink-0 mt-1.5" aria-hidden="true" />
+                <span>
+                  <strong className="text-[#B91C1C]">Não comprar:</strong> o preço vai cair e seu estoque aguenta tranquilo — segure o dinheiro.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-3 h-3 rounded-sm bg-[#1D4ED8] shrink-0 mt-1.5" aria-hidden="true" />
+                <span>
+                  <strong className="text-[#1D4ED8]">Aguardar:</strong> pátio abastecido e preço firme, sem pressa para pedir.
+                </span>
+              </li>
+            </ul>
+
+            <div className="pt-2.5 border-t border-[#E2E8F0] text-[14px]">
+              <strong className="text-[#0F172A]">Para que serve "Seu custo médio (R$)"?</strong>{' '}
+              Ao abrir um material, coloque quanto você pagou em média pelo que está no pátio. Assim o app calcula o{' '}
+              <strong className="text-[#0F172A]">dinheiro parado no estoque</strong> e avisa se sua compra foi mais barata ou mais cara que o preço de hoje.
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Resumo do Semáforo (3 cards grandes lado a lado) */}
+      <section aria-label="Resumo do semáforo de compras">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-[16px] font-bold text-[#0F172A]">
+            Decisão de hoje no pátio
+          </h2>
+          {filterStatus !== 'ALL' && (
+            <button
+              type="button"
+              onClick={() => setFilterStatus('ALL')}
+              className="text-[14px] font-bold text-[#1D4ED8] underline underline-offset-2 min-h-[36px] px-2"
+            >
+              Ver todos ({items.length})
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-3 gap-2.5">
+          <button
+            type="button"
+            onClick={() => toggleFilter('COMPRAR_AGORA')}
+            className={`text-left rounded-2xl p-3 border-2 transition-transform active:scale-[0.98] min-h-[104px] flex flex-col justify-between ${
+              filterStatus === 'COMPRAR_AGORA'
+                ? 'bg-[#DCFCE7] border-[#15803D] ring-2 ring-[#15803D]/25'
+                : 'bg-[#DCFCE7]/70 border-[#86EFAC]'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-1">
+              <ShoppingCart className="w-5 h-5 text-[#15803D]" aria-hidden="true" />
+              <span className="text-[12px] font-bold text-[#15803D]">VERDE</span>
+            </div>
+            <div className="mt-1">
+              <div className="text-[30px] leading-none font-extrabold text-[#15803D] font-num">
+                {countComprar}
+              </div>
+              <div className="text-[13px] font-bold text-[#15803D] mt-1 leading-tight">
+                Comprar
+              </div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => toggleFilter('ANTECIPAR_COMPRA')}
+            className={`text-left rounded-2xl p-3 border-2 transition-transform active:scale-[0.98] min-h-[104px] flex flex-col justify-between ${
+              filterStatus === 'ANTECIPAR_COMPRA'
+                ? 'bg-[#FEF3C7] border-[#B45309] ring-2 ring-[#B45309]/25'
+                : 'bg-[#FEF3C7]/75 border-[#FCD34D]'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-1">
+              <TrendingUp className="w-5 h-5 text-[#B45309]" aria-hidden="true" />
+              <span className="text-[12px] font-bold text-[#B45309]">AMARELO</span>
+            </div>
+            <div className="mt-1">
+              <div className="text-[30px] leading-none font-extrabold text-[#B45309] font-num">
+                {countAntecipar}
+              </div>
+              <div className="text-[13px] font-bold text-[#B45309] mt-1 leading-tight">
+                Antecipar
+              </div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => toggleFilter('NAO_COMPRAR')}
+            className={`text-left rounded-2xl p-3 border-2 transition-transform active:scale-[0.98] min-h-[104px] flex flex-col justify-between ${
+              filterStatus === 'NAO_COMPRAR'
+                ? 'bg-[#FEE2E2] border-[#B91C1C] ring-2 ring-[#B91C1C]/25'
+                : 'bg-[#FEE2E2]/75 border-[#FCA5A5]'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-1">
+              <Hand className="w-5 h-5 text-[#B91C1C]" aria-hidden="true" />
+              <span className="text-[12px] font-bold text-[#B91C1C]">VERMELHO</span>
+            </div>
+            <div className="mt-1">
+              <div className="text-[30px] leading-none font-extrabold text-[#B91C1C] font-num">
+                {countNaoComprar}
+              </div>
+              <div className="text-[13px] font-bold text-[#B91C1C] mt-1 leading-tight">
+                Não comprar
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {countAguardar > 0 && (
+          <button
+            type="button"
+            onClick={() => toggleFilter('AGUARDAR')}
+            className={`mt-2.5 w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-[14px] font-semibold transition-colors min-h-[48px] ${
+              filterStatus === 'AGUARDAR'
+                ? 'bg-[#DBEAFE] border-[#1D4ED8] text-[#1D4ED8]'
+                : 'bg-[#F8FAFC] border-[#CBD5E1] text-[#334155]'
+            }`}
+          >
+            <span className="inline-flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[#1D4ED8]" aria-hidden="true" />
+              <span>Itens em situação tranquila (Aguardar)</span>
+            </span>
+            <span className="font-extrabold text-[#1D4ED8] font-num">
+              {countAguardar} {countAguardar === 1 ? 'item' : 'itens'}
+            </span>
+          </button>
+        )}
+      </section>
+
+      {/* 2 KPIs Financeiros Simples */}
+      <section aria-label="Resumo financeiro do pátio" className="grid grid-cols-2 gap-3">
+        <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-2xl p-3.5">
+          <div className="text-[13px] font-semibold text-[#334155] leading-snug">
+            Dinheiro parado no estoque
+          </div>
+          <div className="text-[24px] leading-tight font-extrabold text-[#0F172A] mt-1.5 font-num">
+            {formatBRLWhole(totalDinheiroParado)}
+          </div>
+        </div>
+
+        <div className="bg-[#DCFCE7]/50 border border-[#86EFAC] rounded-2xl p-3.5">
+          <div className="text-[13px] font-semibold text-[#15803D] leading-snug">
+            Economia possível (45 dias)
+          </div>
+          <div className="text-[24px] leading-tight font-extrabold text-[#15803D] mt-1.5 font-num">
+            {formatBRLWhole(totalEconomia45d)}
+          </div>
+        </div>
+      </section>
+
+      {/* Lista Priorizada de Materiais */}
+      <section aria-label="Lista priorizada de materiais">
+        <div className="flex items-baseline justify-between mb-2.5">
+          <h2 className="text-[18px] font-extrabold text-[#0F172A]">
+            Lista de materiais ({visibleItems.length})
+          </h2>
+          <span className="text-[13px] font-medium text-[#334155]">
+            Toque para abrir
+          </span>
+        </div>
+
+        <div className="space-y-3">
+          {visibleItems.map((item) => {
+            const meta = STATUS_META[item.status];
+            const isUp = item.tendencia === 'alta';
+            const isDown = item.tendencia === 'queda';
+
+            const priceTrendTextColor = isUp
+              ? 'text-[#B45309]'
+              : isDown
+              ? 'text-[#B91C1C]'
+              : 'text-[#334155]';
+
+            return (
+              <button
+                key={item.record.id}
+                type="button"
+                onClick={() => onSelectMaterial(item.record.id)}
+                className={`w-full text-left bg-[#F8FAFC] border border-[#CBD5E1] border-l-[6px] ${meta.leftAccentColor} rounded-2xl p-4 transition-transform active:scale-[0.99] hover:border-[#94A3B8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-[17px] font-extrabold text-[#0F172A] leading-snug">
+                      {item.record.insumo}
+                    </h3>
+                    <p className="text-[14px] font-medium text-[#334155] mt-0.5">
+                      No pátio: <span className="font-bold text-[#0F172A] font-num">{formatQty(item.config.estoqueAtual)}</span> {item.record.unidadeComercial}
+                    </p>
+                  </div>
+                  <ChevronRight
+                    className="w-5 h-5 text-[#334155] shrink-0 mt-0.5"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  <StatusChip status={item.status} />
+
+                  <div className="text-right">
+                    <div className="text-[14px] font-bold text-[#0F172A] font-num">
+                      {item.diasQueDura >= 999
+                        ? 'Sem giro recente'
+                        : `Estoque dura ${item.diasQueDura} ${item.diasQueDura === 1 ? 'dia' : 'dias'}`}
+                    </div>
+                    <div
+                      className={`inline-flex items-center justify-end gap-1 text-[14px] font-bold font-num ${priceTrendTextColor}`}
+                    >
+                      {isUp && <ArrowUpRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
+                      {isDown && <ArrowDownRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
+                      {!isUp && !isDown && <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
+                      <span>
+                        {isUp || isDown
+                          ? `${formatPercentSigned(item.var45d)} em 45d`
+                          : `Estável (${formatPercentSigned(item.var45d)})`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
+}
