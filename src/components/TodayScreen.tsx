@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  AlertTriangle,
   ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
@@ -7,9 +8,8 @@ import {
   ChevronRight,
   ChevronUp,
   Clock,
-  Hand,
   Info,
-  ShoppingCart,
+  TrendingDown,
   TrendingUp,
 } from 'lucide-react';
 import { EvaluatedMaterial, TrafficLightStatus } from '../types/inventory';
@@ -99,41 +99,35 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
         {showWelcome && (
           <div className="px-4 pb-4 pt-1 border-t border-[#E2E8F0] space-y-3 text-[15px] text-[#334155] leading-snug">
             <p className="font-medium text-[#0F172A]">
-              Bata o olho nas cores do semáforo para saber o que fazer hoje no depósito:
+              Acompanhe o Termômetro de Mercado para apoiar sua decisão no depósito:
             </p>
 
             <ul className="space-y-2 text-[14px]">
               <li className="flex items-start gap-2">
-                <span className="w-3 h-3 rounded-sm bg-[#15803D] shrink-0 mt-1.5" aria-hidden="true" />
+                <span className="w-3 h-3 rounded-sm bg-[#B91C1C] shrink-0 mt-1.5" aria-hidden="true" />
                 <span>
-                  <strong className="text-[#15803D]">Comprar agora:</strong> estoque baixou no pátio — peça hoje para não faltar pro cliente.
+                  <strong className="text-[#B91C1C]">Atenção ao Estoque:</strong> Volume baixo no pátio — avalie a reposição para evitar falta ao cliente.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-3 h-3 rounded-sm bg-[#B45309] shrink-0 mt-1.5" aria-hidden="true" />
                 <span>
-                  <strong className="text-[#B45309]">Antecipar compra:</strong> ainda tem no pátio, mas o preço vai subir antes da próxima entrega.
+                  <strong className="text-[#B45309]">Pressão de Alta:</strong> Estoque suficiente, mas a tendência estatística aponta alta nos próximos 30 dias.
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="w-3 h-3 rounded-sm bg-[#B91C1C] shrink-0 mt-1.5" aria-hidden="true" />
+                <span className="w-3 h-3 rounded-sm bg-[#15803D] shrink-0 mt-1.5" aria-hidden="true" />
                 <span>
-                  <strong className="text-[#B91C1C]">Não comprar:</strong> o preço vai cair e seu estoque aguenta tranquilo — segure o dinheiro.
+                  <strong className="text-[#15803D]">Tendência de Acomodação:</strong> Estoque confortável e mercado com viés de queda ou estabilidade.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-3 h-3 rounded-sm bg-[#1D4ED8] shrink-0 mt-1.5" aria-hidden="true" />
                 <span>
-                  <strong className="text-[#1D4ED8]">Aguardar:</strong> pátio abastecido e preço firme, sem pressa para pedir.
+                  <strong className="text-[#1D4ED8]">Mercado Estável:</strong> Pátio abastecido e preços firmes, sem pressão imediata de compra.
                 </span>
               </li>
             </ul>
-
-            <div className="pt-2.5 border-t border-[#E2E8F0] text-[14px]">
-              <strong className="text-[#0F172A]">Para que serve "Seu custo médio (R$)"?</strong>{' '}
-              Ao abrir um material, coloque quanto você pagou em média pelo que está no pátio. Assim o app calcula o{' '}
-              <strong className="text-[#0F172A]">dinheiro parado no estoque</strong> e avisa se sua compra foi mais barata ou mais cara que o preço de hoje.
-            </div>
           </div>
         )}
       </section>
@@ -159,22 +153,22 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
           <button
             type="button"
             onClick={() => toggleFilter('COMPRAR_AGORA')}
-            className={`text-left rounded-2xl p-3 border-2 transition-transform active:scale-[0.98] min-h-[104px] flex flex-col justify-between ${
+            className={`text-left rounded-2xl p-3 border-2 transition-transform active:scale-[0.98] min-h-[112px] flex flex-col justify-between ${
               filterStatus === 'COMPRAR_AGORA'
-                ? 'bg-[#DCFCE7] border-[#15803D] ring-2 ring-[#15803D]/25'
-                : 'bg-[#DCFCE7]/70 border-[#86EFAC]'
+                ? 'bg-[#FEE2E2] border-[#B91C1C] ring-2 ring-[#B91C1C]/25'
+                : 'bg-[#FEE2E2]/75 border-[#FCA5A5]'
             }`}
           >
             <div className="flex items-center justify-between gap-1">
-              <ShoppingCart className="w-5 h-5 text-[#15803D]" aria-hidden="true" />
-              <span className="text-[12px] font-bold text-[#15803D]">VERDE</span>
+              <AlertTriangle className="w-5 h-5 text-[#B91C1C] shrink-0" aria-hidden="true" />
+              <span className="text-[11px] font-bold text-[#B91C1C]">VERMELHO</span>
             </div>
             <div className="mt-1">
-              <div className="text-[30px] leading-none font-extrabold text-[#15803D] font-num">
+              <div className="text-[30px] leading-none font-extrabold text-[#B91C1C] font-num">
                 {countComprar}
               </div>
-              <div className="text-[13px] font-bold text-[#15803D] mt-1 leading-tight">
-                Comprar
+              <div className="text-[12px] font-bold text-[#B91C1C] mt-1 leading-tight">
+                Atenção ao Estoque
               </div>
             </div>
           </button>
@@ -182,22 +176,22 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
           <button
             type="button"
             onClick={() => toggleFilter('ANTECIPAR_COMPRA')}
-            className={`text-left rounded-2xl p-3 border-2 transition-transform active:scale-[0.98] min-h-[104px] flex flex-col justify-between ${
+            className={`text-left rounded-2xl p-3 border-2 transition-transform active:scale-[0.98] min-h-[112px] flex flex-col justify-between ${
               filterStatus === 'ANTECIPAR_COMPRA'
                 ? 'bg-[#FEF3C7] border-[#B45309] ring-2 ring-[#B45309]/25'
                 : 'bg-[#FEF3C7]/75 border-[#FCD34D]'
             }`}
           >
             <div className="flex items-center justify-between gap-1">
-              <TrendingUp className="w-5 h-5 text-[#B45309]" aria-hidden="true" />
-              <span className="text-[12px] font-bold text-[#B45309]">AMARELO</span>
+              <TrendingUp className="w-5 h-5 text-[#B45309] shrink-0" aria-hidden="true" />
+              <span className="text-[11px] font-bold text-[#B45309]">AMARELO</span>
             </div>
             <div className="mt-1">
               <div className="text-[30px] leading-none font-extrabold text-[#B45309] font-num">
                 {countAntecipar}
               </div>
-              <div className="text-[13px] font-bold text-[#B45309] mt-1 leading-tight">
-                Antecipar
+              <div className="text-[12px] font-bold text-[#B45309] mt-1 leading-tight">
+                Pressão de Alta
               </div>
             </div>
           </button>
@@ -205,22 +199,22 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
           <button
             type="button"
             onClick={() => toggleFilter('NAO_COMPRAR')}
-            className={`text-left rounded-2xl p-3 border-2 transition-transform active:scale-[0.98] min-h-[104px] flex flex-col justify-between ${
+            className={`text-left rounded-2xl p-3 border-2 transition-transform active:scale-[0.98] min-h-[112px] flex flex-col justify-between ${
               filterStatus === 'NAO_COMPRAR'
-                ? 'bg-[#FEE2E2] border-[#B91C1C] ring-2 ring-[#B91C1C]/25'
-                : 'bg-[#FEE2E2]/75 border-[#FCA5A5]'
+                ? 'bg-[#DCFCE7] border-[#15803D] ring-2 ring-[#15803D]/25'
+                : 'bg-[#DCFCE7]/70 border-[#86EFAC]'
             }`}
           >
             <div className="flex items-center justify-between gap-1">
-              <Hand className="w-5 h-5 text-[#B91C1C]" aria-hidden="true" />
-              <span className="text-[12px] font-bold text-[#B91C1C]">VERMELHO</span>
+              <TrendingDown className="w-5 h-5 text-[#15803D] shrink-0" aria-hidden="true" />
+              <span className="text-[11px] font-bold text-[#15803D]">VERDE</span>
             </div>
             <div className="mt-1">
-              <div className="text-[30px] leading-none font-extrabold text-[#B91C1C] font-num">
+              <div className="text-[30px] leading-none font-extrabold text-[#15803D] font-num">
                 {countNaoComprar}
               </div>
-              <div className="text-[13px] font-bold text-[#B91C1C] mt-1 leading-tight">
-                Não comprar
+              <div className="text-[12px] font-bold text-[#15803D] mt-1 leading-tight">
+                Tendência de Acomodação
               </div>
             </div>
           </button>
@@ -238,7 +232,7 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
           >
             <span className="inline-flex items-center gap-2">
               <Clock className="w-4 h-4 text-[#1D4ED8]" aria-hidden="true" />
-              <span>Itens em situação tranquila (Aguardar)</span>
+              <span>Mercado Estável</span>
             </span>
             <span className="font-extrabold text-[#1D4ED8] font-num">
               {countAguardar} {countAguardar === 1 ? 'item' : 'itens'}
@@ -288,7 +282,7 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
             const priceTrendTextColor = isUp
               ? 'text-[#B45309]'
               : isDown
-              ? 'text-[#B91C1C]'
+              ? 'text-[#15803D]'
               : 'text-[#334155]';
 
             return (

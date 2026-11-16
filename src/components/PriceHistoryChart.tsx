@@ -90,14 +90,14 @@ export function PriceHistoryChart({
     tendencia === 'alta'
       ? '#B45309'
       : tendencia === 'queda'
-      ? '#B91C1C'
+      ? '#15803D'
       : '#1D4ED8';
 
   const bandFill =
     tendencia === 'alta'
       ? 'rgba(180, 83, 9, 0.16)'
       : tendencia === 'queda'
-      ? 'rgba(185, 28, 28, 0.14)'
+      ? 'rgba(21, 128, 61, 0.14)'
       : 'rgba(29, 78, 216, 0.14)';
 
   const lastForecast = prevCoords[prevCoords.length - 1];

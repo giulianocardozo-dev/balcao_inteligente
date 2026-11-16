@@ -291,7 +291,7 @@ export function SimulateScreen({
           <div
             className={`rounded-2xl p-4 border-2 ${
               sim1.jaPassouDaHora
-                ? 'bg-[#DCFCE7] border-[#15803D]'
+                ? 'bg-[#FEE2E2] border-[#B91C1C]'
                 : 'bg-[#DBEAFE] border-[#1D4ED8]'
             }`}
           >
@@ -313,8 +313,8 @@ export function SimulateScreen({
                 </strong>
               </div>
               {sim1.jaPassouDaHora ? (
-                <div className="text-[#15803D] font-extrabold">
-                  Já chegou na hora de pedir! Sugestão de pedido:{' '}
+                <div className="text-[#B91C1C] font-extrabold">
+                  Atenção ao Estoque: já chegou na hora de pedir! Sugestão de pedido:{' '}
                   {formatQty(sim1.quantidadeSugerida)} {record.unidadeComercial}.
                 </div>
               ) : (

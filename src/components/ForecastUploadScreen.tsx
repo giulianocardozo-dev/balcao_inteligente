@@ -281,9 +281,9 @@ export function ForecastUploadScreen({
                         {item.record.insumo}
                       </div>
                       <div
-                        className={`inline-flex items-center gap-1 text-[12px] font-bold mt-1 ${meta.textColor}`}
+                        className={`inline-flex items-start gap-1 text-[11px] font-bold leading-tight mt-1 ${meta.textColor}`}
                       >
-                        <StatusIcon status={item.status} className="w-3.5 h-3.5 shrink-0" />
+                        <StatusIcon status={item.status} className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                         <span>{meta.shortLabel}</span>
                       </div>
                     </div>
@@ -301,7 +301,7 @@ export function ForecastUploadScreen({
                           item.tendencia === 'alta'
                             ? 'text-[#B45309]'
                             : item.tendencia === 'queda'
-                            ? 'text-[#B91C1C]'
+                            ? 'text-[#15803D]'
                             : 'text-[#334155]'
                         }`}
                       >

@@ -344,6 +344,7 @@ export function MaterialDetailScreen({
             </label>
             <input
               id="edit-custo-medio"
+              aria-describedby="edit-custo-medio-help"
               type="number"
               min={0}
               step="0.10"
@@ -352,9 +353,12 @@ export function MaterialDetailScreen({
               onChange={(e) => handleNumberInput('custoMedio', e.target.value, 0)}
               className="w-full h-12 px-3 rounded-xl bg-white border border-[#CBD5E1] text-center text-[18px] font-extrabold text-[#0F172A] font-num"
             />
-            <div className="text-[12px] font-semibold text-[#334155] mt-1 font-num">
-              Total do estoque: <strong className="text-[#0F172A]">{formatBRL(custoTotalEstoque)}</strong>
-            </div>
+            <p
+              id="edit-custo-medio-help"
+              className="text-[12px] font-medium text-[#334155] mt-1.5 leading-snug"
+            >
+              Quanto pagou por unidade para comparar com a média regional
+            </p>
           </div>
         </div>
       </section>
@@ -394,7 +398,7 @@ export function MaterialDetailScreen({
                 material.tendencia === 'alta'
                   ? 'font-bold text-[#B45309]'
                   : material.tendencia === 'queda'
-                  ? 'font-bold text-[#B91C1C]'
+                  ? 'font-bold text-[#15803D]'
                   : 'font-bold text-[#334155]'
               }
             >
