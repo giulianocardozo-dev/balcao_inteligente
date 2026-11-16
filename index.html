@@ -22,8 +22,17 @@
       href="https://fonts.googleapis.com/css2?family=Barlow:wght@700&family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem('balcao_inteligente_theme_v1') === 'dark') {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body class="bg-white text-[#0F172A] antialiased selection:bg-[#DBEAFE] selection:text-[#1D4ED8]">
+  <body class="bg-white dark:bg-slate-950 text-[#0F172A] dark:text-slate-50 antialiased selection:bg-[#DBEAFE] selection:text-[#1D4ED8] dark:selection:bg-blue-900 dark:selection:text-blue-100">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

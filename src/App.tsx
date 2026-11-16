@@ -5,7 +5,9 @@ import {
   Home,
   Loader2,
   LocateFixed,
+  Moon,
   Package,
+  Sun,
 } from 'lucide-react';
 import {
   buildDefaultSinapiDataset,
@@ -31,7 +33,10 @@ const STORAGE_KEYS = {
   RECORDS: 'balcao_inteligente_records_v1',
   META: 'balcao_inteligente_meta_v1',
   CONFIGS: 'balcao_inteligente_configs_v1',
+  THEME: 'balcao_inteligente_theme_v1',
 };
+
+type ThemeMode = 'light' | 'dark';
 
 const DEFAULT_META: DataSourceMeta = {
   type: 'demo',
@@ -69,6 +74,15 @@ export default function App() {
     const saved = localStorage.getItem(STORAGE_KEYS.UF);
     return saved || 'SP';
   });
+
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEYS.THEME) === 'dark' ? 'dark' : 'light';
+    } catch {
+      return 'light';
+    }
+  });
+  const isDark = theme === 'dark';
 
   const [activeTab, setActiveTab] = useState<AppTab>('hoje');
   const [selectedMaterialId, setSelectedMaterialId] = useState<string>('00000033');
@@ -204,6 +218,19 @@ export default function App() {
     }
   }, [storeConfigs]);
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark);
+    try {
+      localStorage.setItem(STORAGE_KEYS.THEME, theme);
+    } catch {
+      // ignore storage quota errors
+    }
+  }, [isDark, theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   const ufRecords = useMemo(
     () => allRecords.filter((r) => r.uf === selectedUf),
     [allRecords, selectedUf]
@@ -312,16 +339,16 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen w-full md:py-4 flex justify-center bg-white md:bg-[#F1F5F9]">
-      <div className="w-full max-w-[440px] min-h-screen md:min-h-[calc(100vh-2rem)] bg-white md:border md:border-[#CBD5E1] md:rounded-3xl md:overflow-hidden flex flex-col relative">
+    <div className="min-h-screen w-full md:py-4 flex justify-center bg-white md:bg-[#F1F5F9] dark:bg-slate-950 md:dark:bg-slate-950">
+      <div className="w-full max-w-[440px] min-h-screen md:min-h-[calc(100vh-2rem)] bg-white dark:bg-slate-900 md:border md:border-[#CBD5E1] dark:md:border-slate-700 md:rounded-3xl md:overflow-hidden flex flex-col relative">
         {/* Compact Sticky Header */}
-        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-[#CBD5E1] px-4 py-2.5">
-          <div className="flex items-center justify-between gap-2.5">
+        <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-[#CBD5E1] dark:border-slate-700 px-4 py-2.5">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5 min-w-0">
               {iconError ? (
                 <div
                   aria-hidden="true"
-                  className="w-11 h-11 rounded-xl bg-[#0A2B66] text-white flex items-center justify-center font-brand text-[16px] shrink-0"
+                  className="w-10 h-10 min-[390px]:w-11 min-[390px]:h-11 rounded-xl bg-[#0A2B66] text-white flex items-center justify-center font-brand text-[16px] shrink-0"
                 >
                   BI
                 </div>
@@ -331,14 +358,14 @@ export default function App() {
                   alt="Balcão Inteligente"
                   referrerPolicy="no-referrer"
                   onError={() => setIconError(true)}
-                  className="w-11 h-11 rounded-xl object-contain shrink-0"
+                  className="w-10 h-10 min-[390px]:w-11 min-[390px]:h-11 rounded-xl object-contain shrink-0"
                 />
               )}
               <div className="min-w-0">
-                <h1 className="font-brand font-bold text-[22px] text-[#0F172A] leading-tight tracking-tight truncate">
+                <h1 className="font-brand font-bold text-[19px] min-[390px]:text-[22px] text-[#0F172A] dark:text-slate-50 leading-tight tracking-tight truncate">
                   Balcão Inteligente
                 </h1>
-                <div className="text-[13px] font-medium text-[#334155] truncate">
+                <div className="text-[13px] font-medium text-[#334155] dark:text-slate-300 truncate">
                   Depósito Oliveira
                 </div>
               </div>
@@ -347,15 +374,30 @@ export default function App() {
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
+                onClick={toggleTheme}
+                aria-pressed={isDark}
+                aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
+                title={isDark ? 'Modo claro' : 'Modo escuro'}
+                className="w-11 h-11 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 flex items-center justify-center text-[#0F172A] dark:text-amber-300 hover:border-[#94A3B8] dark:hover:border-slate-400 active:bg-[#E2E8F0] dark:active:bg-slate-700 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
+              >
+                {isDark ? (
+                  <Sun className="w-[18px] h-[18px]" aria-hidden="true" />
+                ) : (
+                  <Moon className="w-[18px] h-[18px]" aria-hidden="true" />
+                )}
+              </button>
+
+              <button
+                type="button"
                 onClick={() => detectUserUf(true)}
                 aria-label="Detectar estado pela minha localização"
                 title="Usar minha localização"
-                className="w-11 h-11 rounded-xl bg-[#F8FAFC] border border-[#CBD5E1] flex items-center justify-center text-[#0F172A] hover:border-[#94A3B8] active:bg-[#E2E8F0] focus-visible:outline-2 focus-visible:outline-[#1D4ED8]"
+                className="w-11 h-11 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 flex items-center justify-center text-[#0F172A] dark:text-slate-50 hover:border-[#94A3B8] dark:hover:border-slate-400 active:bg-[#E2E8F0] dark:active:bg-slate-700 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
               >
                 {geoLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-[#1D4ED8]" aria-hidden="true" />
+                  <Loader2 className="w-4 h-4 animate-spin text-[#1D4ED8] dark:text-blue-300" aria-hidden="true" />
                 ) : (
-                  <LocateFixed className="w-4 h-4 text-[#1D4ED8]" aria-hidden="true" />
+                  <LocateFixed className="w-4 h-4 text-[#1D4ED8] dark:text-blue-300" aria-hidden="true" />
                 )}
               </button>
 
@@ -376,7 +418,7 @@ export default function App() {
                   setGeoNotice(null);
                   setSelectedUf(nextUf);
                 }}
-                className="min-h-[44px] px-2.5 rounded-xl bg-[#F8FAFC] border border-[#CBD5E1] text-[15px] font-extrabold text-[#0F172A] focus-visible:outline-2 focus-visible:outline-[#1D4ED8]"
+                className="min-h-[44px] px-2.5 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 text-[15px] font-extrabold text-[#0F172A] dark:text-slate-50 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
               >
                 {availableUfs.map((uf) => (
                   <option key={uf} value={uf}>
@@ -392,8 +434,8 @@ export default function App() {
               role="status"
               className={`mt-2 px-3 py-1.5 rounded-xl text-[13px] font-bold border ${
                 geoNotice.type === 'info'
-                  ? 'bg-[#DBEAFE] border-[#93C5FD] text-[#1D4ED8]'
-                  : 'bg-[#FEF3C7] border-[#FCD34D] text-[#B45309]'
+                  ? 'bg-[#DBEAFE] dark:bg-blue-950/80 border-[#93C5FD] dark:border-blue-700 text-[#1D4ED8] dark:text-blue-200'
+                  : 'bg-[#FEF3C7] dark:bg-amber-950/80 border-[#FCD34D] dark:border-amber-600 text-[#B45309] dark:text-amber-200'
               }`}
             >
               {geoNotice.text}
@@ -418,6 +460,7 @@ export default function App() {
               onUpdateConfig={handleUpdateConfig}
               onBackToToday={() => switchTab('hoje')}
               onOpenSimulator={openSimulator}
+              isDark={isDark}
             />
           )}
 
@@ -445,7 +488,7 @@ export default function App() {
         {/* Fixed Bottom Navigation */}
         <nav
           aria-label="Navegação principal"
-          className="fixed md:sticky bottom-0 left-0 right-0 md:left-auto md:right-auto z-40 w-full max-w-[440px] mx-auto bg-white border-t border-[#CBD5E1] pb-safe"
+          className="fixed md:sticky bottom-0 left-0 right-0 md:left-auto md:right-auto z-40 w-full max-w-[440px] mx-auto bg-white dark:bg-slate-900 border-t border-[#CBD5E1] dark:border-slate-700 pb-safe"
         >
           <div className="grid grid-cols-4 h-[64px]">
             <button
@@ -454,8 +497,8 @@ export default function App() {
               aria-current={activeTab === 'hoje' ? 'page' : undefined}
               className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] transition-colors ${
                 activeTab === 'hoje'
-                  ? 'text-[#15803D] font-extrabold bg-[#DCFCE7]/40'
-                  : 'text-[#334155] font-semibold hover:text-[#0F172A]'
+                  ? 'text-[#15803D] dark:text-emerald-300 font-extrabold bg-[#DCFCE7]/40 dark:bg-emerald-950/60'
+                  : 'text-[#334155] dark:text-slate-300 font-semibold hover:text-[#0F172A] dark:hover:text-slate-50'
               }`}
             >
               <Home className="w-[22px] h-[22px]" aria-hidden="true" />
@@ -468,8 +511,8 @@ export default function App() {
               aria-current={activeTab === 'detalhe' ? 'page' : undefined}
               className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] transition-colors ${
                 activeTab === 'detalhe'
-                  ? 'text-[#15803D] font-extrabold bg-[#DCFCE7]/40'
-                  : 'text-[#334155] font-semibold hover:text-[#0F172A]'
+                  ? 'text-[#15803D] dark:text-emerald-300 font-extrabold bg-[#DCFCE7]/40 dark:bg-emerald-950/60'
+                  : 'text-[#334155] dark:text-slate-300 font-semibold hover:text-[#0F172A] dark:hover:text-slate-50'
               }`}
             >
               <Package className="w-[22px] h-[22px]" aria-hidden="true" />
@@ -482,8 +525,8 @@ export default function App() {
               aria-current={activeTab === 'simular' ? 'page' : undefined}
               className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] transition-colors ${
                 activeTab === 'simular'
-                  ? 'text-[#15803D] font-extrabold bg-[#DCFCE7]/40'
-                  : 'text-[#334155] font-semibold hover:text-[#0F172A]'
+                  ? 'text-[#15803D] dark:text-emerald-300 font-extrabold bg-[#DCFCE7]/40 dark:bg-emerald-950/60'
+                  : 'text-[#334155] dark:text-slate-300 font-semibold hover:text-[#0F172A] dark:hover:text-slate-50'
               }`}
             >
               <Calculator className="w-[22px] h-[22px]" aria-hidden="true" />
@@ -496,8 +539,8 @@ export default function App() {
               aria-current={activeTab === 'previsao' ? 'page' : undefined}
               className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] transition-colors ${
                 activeTab === 'previsao'
-                  ? 'text-[#15803D] font-extrabold bg-[#DCFCE7]/40'
-                  : 'text-[#334155] font-semibold hover:text-[#0F172A]'
+                  ? 'text-[#15803D] dark:text-emerald-300 font-extrabold bg-[#DCFCE7]/40 dark:bg-emerald-950/60'
+                  : 'text-[#334155] dark:text-slate-300 font-semibold hover:text-[#0F172A] dark:hover:text-slate-50'
               }`}
             >
               <FileSpreadsheet className="w-[22px] h-[22px]" aria-hidden="true" />

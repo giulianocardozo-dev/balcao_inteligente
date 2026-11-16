@@ -23,6 +23,7 @@ interface MaterialDetailScreenProps {
   onUpdateConfig: (materialId: string, patch: Partial<StoreInventoryConfig>) => void;
   onBackToToday: () => void;
   onOpenSimulator: (materialId: string) => void;
+  isDark?: boolean;
 }
 
 export function MaterialDetailScreen({
@@ -32,6 +33,7 @@ export function MaterialDetailScreen({
   onUpdateConfig,
   onBackToToday,
   onOpenSimulator,
+  isDark = false,
 }: MaterialDetailScreenProps) {
   const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
 
@@ -103,7 +105,7 @@ export function MaterialDetailScreen({
         <button
           type="button"
           onClick={onBackToToday}
-          className="inline-flex items-center gap-1.5 min-h-[48px] px-3 rounded-xl bg-[#F8FAFC] border border-[#CBD5E1] text-[15px] font-bold text-[#0F172A] shrink-0 active:scale-[0.98]"
+          className="inline-flex items-center gap-1.5 min-h-[48px] px-3 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 text-[15px] font-bold text-[#0F172A] dark:text-slate-50 shrink-0 active:scale-[0.98]"
         >
           <ArrowLeft className="w-5 h-5" aria-hidden="true" />
           <span>Voltar</span>
@@ -113,7 +115,7 @@ export function MaterialDetailScreen({
           aria-label="Trocar material"
           value={record.id}
           onChange={(e) => onSelectMaterial(e.target.value)}
-          className="flex-1 min-w-0 min-h-[48px] px-3 rounded-xl bg-[#F8FAFC] border border-[#CBD5E1] text-[15px] font-bold text-[#0F172A] truncate"
+          className="flex-1 min-w-0 min-h-[48px] px-3 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 text-[15px] font-bold text-[#0F172A] dark:text-slate-50 truncate"
         >
           {allMaterials.map((item) => (
             <option key={item.record.id} value={item.record.id}>
@@ -125,29 +127,29 @@ export function MaterialDetailScreen({
 
       {/* Material title & cost summary row */}
       <div>
-        <h2 className="text-[22px] font-extrabold text-[#0F172A] leading-tight">
+        <h2 className="text-[22px] font-extrabold text-[#0F172A] dark:text-slate-50 leading-tight">
           {record.insumo}
         </h2>
-        <p className="text-[14px] font-medium text-[#334155] mt-0.5">
-          Unidade: <span className="font-bold text-[#0F172A]">{record.unidadeComercial}</span>
+        <p className="text-[14px] font-medium text-[#334155] dark:text-slate-300 mt-0.5">
+          Unidade: <span className="font-bold text-[#0F172A] dark:text-slate-50">{record.unidadeComercial}</span>
         </p>
 
-        <div className="mt-2.5 grid grid-cols-3 gap-2 pt-2.5 border-t border-[#E2E8F0]">
+        <div className="mt-2.5 grid grid-cols-3 gap-2 pt-2.5 border-t border-[#E2E8F0] dark:border-slate-700">
           <div>
-            <div className="text-[12px] font-semibold text-[#334155]">Ref. hoje</div>
-            <div className="text-[15px] font-extrabold text-[#0F172A] font-num">
+            <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Ref. hoje</div>
+            <div className="text-[15px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num">
               {formatBRL(material.precoAtual)}
             </div>
           </div>
           <div>
-            <div className="text-[12px] font-semibold text-[#334155]">Custo médio</div>
-            <div className="text-[15px] font-extrabold text-[#0F172A] font-num">
+            <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Custo médio</div>
+            <div className="text-[15px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num">
               {formatBRL(config.custoMedio)}
             </div>
           </div>
           <div>
-            <div className="text-[12px] font-semibold text-[#334155]">Total estoque</div>
-            <div className="text-[15px] font-extrabold text-[#0F172A] font-num">
+            <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Total estoque</div>
+            <div className="text-[15px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num">
               {formatBRL(custoTotalEstoque)}
             </div>
           </div>
@@ -161,7 +163,7 @@ export function MaterialDetailScreen({
       >
         <div className="flex items-start gap-3">
           <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-white ${meta.solidColor}`}
+            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${meta.solidColor}`}
           >
             <StatusIcon status={material.status} className="w-6 h-6" />
           </div>
@@ -169,23 +171,23 @@ export function MaterialDetailScreen({
             <div className={`text-[18px] font-extrabold tracking-tight ${meta.textColor}`}>
               {meta.label}
             </div>
-            <p className="text-[15px] font-semibold text-[#0F172A] mt-0.5 leading-snug">
+            <p className="text-[15px] font-semibold text-[#0F172A] dark:text-slate-100 mt-0.5 leading-snug">
               {meta.description}
             </p>
           </div>
         </div>
 
-        <div className="mt-4 pt-3 border-t border-black/10 grid grid-cols-2 gap-3">
+        <div className="mt-4 pt-3 border-t border-black/10 dark:border-white/15 grid grid-cols-2 gap-3">
           <div>
-            <div className="text-[13px] font-semibold text-[#334155]">
+            <div className="text-[13px] font-semibold text-[#334155] dark:text-slate-200">
               Quantidade sugerida
             </div>
-            <div className="text-[24px] leading-tight font-extrabold text-[#0F172A] font-num mt-0.5">
+            <div className="text-[24px] leading-tight font-extrabold text-[#0F172A] dark:text-slate-50 font-num mt-0.5">
               {material.quantidadeSugerida > 0
                 ? `${formatQty(material.quantidadeSugerida)}`
                 : '0'}
             </div>
-            <div className="text-[13px] font-semibold text-[#334155]">
+            <div className="text-[13px] font-semibold text-[#334155] dark:text-slate-200">
               {material.quantidadeSugerida > 0
                 ? record.unidadeComercial
                 : 'Não precisa pedir agora'}
@@ -193,15 +195,15 @@ export function MaterialDetailScreen({
           </div>
 
           <div>
-            <div className="text-[13px] font-semibold text-[#334155]">
+            <div className="text-[13px] font-semibold text-[#334155] dark:text-slate-200">
               Economia estimada
             </div>
-            <div className={`text-[24px] leading-tight font-extrabold font-num mt-0.5 ${material.economiaEstimada > 0 ? 'text-[#15803D]' : 'text-[#0F172A]'}`}>
+            <div className={`text-[24px] leading-tight font-extrabold font-num mt-0.5 ${material.economiaEstimada > 0 ? 'text-[#15803D] dark:text-emerald-300' : 'text-[#0F172A] dark:text-slate-50'}`}>
               {material.economiaEstimada > 0
                 ? formatBRL(material.economiaEstimada)
                 : '—'}
             </div>
-            <div className="text-[13px] font-semibold text-[#334155]">
+            <div className="text-[13px] font-semibold text-[#334155] dark:text-slate-200">
               {material.economiaEstimada > 0
                 ? 'Comprando antes da alta'
                 : material.tendencia === 'queda'
@@ -213,12 +215,12 @@ export function MaterialDetailScreen({
       </section>
 
       {/* Edição Rápida do Estoque da Loja (Inline) */}
-      <section className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-2xl p-4 space-y-3.5">
+      <section className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl p-4 space-y-3.5">
         <div className="flex items-baseline justify-between gap-2">
-          <h3 className="text-[17px] font-extrabold text-[#0F172A]">
+          <h3 className="text-[17px] font-extrabold text-[#0F172A] dark:text-slate-50">
             Ajustar números da sua loja
           </h3>
-          <span className="text-[13px] font-semibold text-[#15803D]">
+          <span className="text-[13px] font-semibold text-[#15803D] dark:text-emerald-300">
             Salva na hora
           </span>
         </div>
@@ -227,7 +229,7 @@ export function MaterialDetailScreen({
         <div>
           <label
             htmlFor="edit-estoque-atual"
-            className="block text-[14px] font-bold text-[#334155] mb-1.5"
+            className="block text-[14px] font-bold text-[#334155] dark:text-slate-200 mb-1.5"
           >
             Estoque atual no pátio ({record.unidadeComercial})
           </label>
@@ -236,7 +238,7 @@ export function MaterialDetailScreen({
               type="button"
               aria-label="Diminuir estoque atual"
               onClick={() => adjustField('estoqueAtual', -stepAmount(config.estoqueAtual), 0)}
-              className="w-12 h-12 rounded-xl bg-white border border-[#CBD5E1] flex items-center justify-center text-[#0F172A] active:bg-[#E2E8F0] shrink-0"
+              className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 flex items-center justify-center text-[#0F172A] dark:text-slate-50 active:bg-[#E2E8F0] dark:active:bg-slate-700 shrink-0"
             >
               <Minus className="w-5 h-5" />
             </button>
@@ -247,13 +249,13 @@ export function MaterialDetailScreen({
               inputMode="decimal"
               value={config.estoqueAtual}
               onChange={(e) => handleNumberInput('estoqueAtual', e.target.value, 0)}
-              className="flex-1 min-w-0 h-12 px-3 rounded-xl bg-white border border-[#CBD5E1] text-center text-[20px] font-extrabold text-[#0F172A] font-num"
+              className="flex-1 min-w-0 h-12 px-3 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 text-center text-[20px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num"
             />
             <button
               type="button"
               aria-label="Aumentar estoque atual"
               onClick={() => adjustField('estoqueAtual', stepAmount(config.estoqueAtual), 0)}
-              className="w-12 h-12 rounded-xl bg-white border border-[#CBD5E1] flex items-center justify-center text-[#0F172A] active:bg-[#E2E8F0] shrink-0"
+              className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 flex items-center justify-center text-[#0F172A] dark:text-slate-50 active:bg-[#E2E8F0] dark:active:bg-slate-700 shrink-0"
             >
               <Plus className="w-5 h-5" />
             </button>
@@ -264,7 +266,7 @@ export function MaterialDetailScreen({
         <div>
           <label
             htmlFor="edit-vendas-mes"
-            className="block text-[14px] font-bold text-[#334155] mb-1.5"
+            className="block text-[14px] font-bold text-[#334155] dark:text-slate-200 mb-1.5"
           >
             Vendas no mês ({record.unidadeComercial} nos últimos 30 dias)
           </label>
@@ -273,7 +275,7 @@ export function MaterialDetailScreen({
               type="button"
               aria-label="Diminuir vendas no mês"
               onClick={() => adjustField('vendas30d', -stepAmount(config.vendas30d), 0)}
-              className="w-12 h-12 rounded-xl bg-white border border-[#CBD5E1] flex items-center justify-center text-[#0F172A] active:bg-[#E2E8F0] shrink-0"
+              className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 flex items-center justify-center text-[#0F172A] dark:text-slate-50 active:bg-[#E2E8F0] dark:active:bg-slate-700 shrink-0"
             >
               <Minus className="w-5 h-5" />
             </button>
@@ -284,13 +286,13 @@ export function MaterialDetailScreen({
               inputMode="decimal"
               value={config.vendas30d}
               onChange={(e) => handleNumberInput('vendas30d', e.target.value, 0)}
-              className="flex-1 min-w-0 h-12 px-3 rounded-xl bg-white border border-[#CBD5E1] text-center text-[20px] font-extrabold text-[#0F172A] font-num"
+              className="flex-1 min-w-0 h-12 px-3 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 text-center text-[20px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num"
             />
             <button
               type="button"
               aria-label="Aumentar vendas no mês"
               onClick={() => adjustField('vendas30d', stepAmount(config.vendas30d), 0)}
-              className="w-12 h-12 rounded-xl bg-white border border-[#CBD5E1] flex items-center justify-center text-[#0F172A] active:bg-[#E2E8F0] shrink-0"
+              className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 flex items-center justify-center text-[#0F172A] dark:text-slate-50 active:bg-[#E2E8F0] dark:active:bg-slate-700 shrink-0"
             >
               <Plus className="w-5 h-5" />
             </button>
@@ -302,7 +304,7 @@ export function MaterialDetailScreen({
           <div>
             <label
               htmlFor="edit-dias-entrega"
-              className="block text-[11px] min-[410px]:text-[12.5px] font-bold text-[#334155] tracking-tight leading-tight whitespace-nowrap mb-1.5"
+              className="block text-[11px] min-[410px]:text-[12.5px] font-bold text-[#334155] dark:text-slate-200 tracking-tight leading-tight whitespace-nowrap mb-1.5"
             >
               Dias pro caminhão entregar
             </label>
@@ -311,7 +313,7 @@ export function MaterialDetailScreen({
                 type="button"
                 aria-label="Diminuir dias de entrega"
                 onClick={() => adjustField('diasEntrega', -1, 1)}
-                className="w-12 h-12 rounded-xl bg-white border border-[#CBD5E1] flex items-center justify-center text-[#0F172A] active:bg-[#E2E8F0] shrink-0"
+                className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 flex items-center justify-center text-[#0F172A] dark:text-slate-50 active:bg-[#E2E8F0] dark:active:bg-slate-700 shrink-0"
               >
                 <Minus className="w-4 h-4" />
               </button>
@@ -322,13 +324,13 @@ export function MaterialDetailScreen({
                 inputMode="numeric"
                 value={config.diasEntrega}
                 onChange={(e) => handleNumberInput('diasEntrega', e.target.value, 1)}
-                className="w-full min-w-0 h-12 px-1 rounded-xl bg-white border border-[#CBD5E1] text-center text-[18px] font-extrabold text-[#0F172A] font-num"
+                className="w-full min-w-0 h-12 px-1 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 text-center text-[18px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num"
               />
               <button
                 type="button"
                 aria-label="Aumentar dias de entrega"
                 onClick={() => adjustField('diasEntrega', 1, 1)}
-                className="w-12 h-12 rounded-xl bg-white border border-[#CBD5E1] flex items-center justify-center text-[#0F172A] active:bg-[#E2E8F0] shrink-0"
+                className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 flex items-center justify-center text-[#0F172A] dark:text-slate-50 active:bg-[#E2E8F0] dark:active:bg-slate-700 shrink-0"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -338,7 +340,7 @@ export function MaterialDetailScreen({
           <div>
             <label
               htmlFor="edit-custo-medio"
-              className="block text-[11px] min-[410px]:text-[12.5px] font-bold text-[#334155] tracking-tight leading-tight whitespace-nowrap mb-1.5"
+              className="block text-[11px] min-[410px]:text-[12.5px] font-bold text-[#334155] dark:text-slate-200 tracking-tight leading-tight whitespace-nowrap mb-1.5"
             >
               Seu custo médio (R$)
             </label>
@@ -351,11 +353,11 @@ export function MaterialDetailScreen({
               inputMode="decimal"
               value={config.custoMedio}
               onChange={(e) => handleNumberInput('custoMedio', e.target.value, 0)}
-              className="w-full h-12 px-3 rounded-xl bg-white border border-[#CBD5E1] text-center text-[18px] font-extrabold text-[#0F172A] font-num"
+              className="w-full h-12 px-3 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 text-center text-[18px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num"
             />
             <p
               id="edit-custo-medio-help"
-              className="text-[12px] font-medium text-[#334155] mt-1.5 leading-snug"
+              className="text-[12px] font-medium text-[#334155] dark:text-slate-300 mt-1.5 leading-snug"
             >
               Quanto pagou por unidade para comparar com a média regional
             </p>
@@ -364,57 +366,57 @@ export function MaterialDetailScreen({
       </section>
 
       {/* 3 Explicações Diretas (Por que fazer isso?) */}
-      <section className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-2xl p-4 space-y-3">
-        <h3 className="text-[17px] font-extrabold text-[#0F172A]">
+      <section className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl p-4 space-y-3">
+        <h3 className="text-[17px] font-extrabold text-[#0F172A] dark:text-slate-50">
           Por que fazer isso?
         </h3>
 
-        <div className="pt-1 border-t border-[#E2E8F0]">
-          <div className="text-[14px] font-bold text-[#0F172A]">
+        <div className="pt-1 border-t border-[#E2E8F0] dark:border-slate-700">
+          <div className="text-[14px] font-bold text-[#0F172A] dark:text-slate-50">
             1. Seu Estoque
           </div>
-          <p className="text-[15px] text-[#334155] mt-0.5 leading-snug font-num">
+          <p className="text-[15px] text-[#334155] dark:text-slate-300 mt-0.5 leading-snug font-num">
             {material.diasQueDura >= 999
               ? 'Sem vendas registradas no mês'
               : `Dura ${material.diasQueDura} ${material.diasQueDura === 1 ? 'dia' : 'dias'}`}{' '}
             · Caminhão leva {config.diasEntrega}{' '}
             {config.diasEntrega === 1 ? 'dia' : 'dias'} · Pedir de novo quando chegar em{' '}
-            <strong className="text-[#0F172A]">
+            <strong className="text-[#0F172A] dark:text-slate-50">
               {formatQty(material.quandoPedirDeNovo)} {record.unidadeComercial}
             </strong>
             .
           </p>
         </div>
 
-        <div className="pt-2.5 border-t border-[#E2E8F0]">
-          <div className="text-[14px] font-bold text-[#0F172A]">
+        <div className="pt-2.5 border-t border-[#E2E8F0] dark:border-slate-700">
+          <div className="text-[14px] font-bold text-[#0F172A] dark:text-slate-50">
             2. O que vai acontecer com o preço
           </div>
-          <p className="text-[15px] text-[#334155] mt-0.5 leading-snug font-num">
-            Hoje <strong className="text-[#0F172A]">{formatBRL(material.precoAtual)}</strong> → Em 45 dias{' '}
-            <strong className="text-[#0F172A]">{formatBRL(material.preco45d)}</strong> (
+          <p className="text-[15px] text-[#334155] dark:text-slate-300 mt-0.5 leading-snug font-num">
+            Hoje <strong className="text-[#0F172A] dark:text-slate-50">{formatBRL(material.precoAtual)}</strong> → Em 45 dias{' '}
+            <strong className="text-[#0F172A] dark:text-slate-50">{formatBRL(material.preco45d)}</strong> (
             <span
               className={
                 material.tendencia === 'alta'
-                  ? 'font-bold text-[#B45309]'
+                  ? 'font-bold text-[#B45309] dark:text-amber-300'
                   : material.tendencia === 'queda'
-                  ? 'font-bold text-[#15803D]'
-                  : 'font-bold text-[#334155]'
+                  ? 'font-bold text-[#15803D] dark:text-emerald-300'
+                  : 'font-bold text-[#334155] dark:text-slate-300'
               }
             >
               {formatPercentSigned(material.var45d)}
             </span>
             ) · Em 3 meses{' '}
-            <strong className="text-[#0F172A]">{formatBRL(material.preco90d)}</strong> (
+            <strong className="text-[#0F172A] dark:text-slate-50">{formatBRL(material.preco90d)}</strong> (
             {formatPercentSigned(material.var90d)}).
           </p>
         </div>
 
-        <div className="pt-2.5 border-t border-[#E2E8F0]">
-          <div className="text-[14px] font-bold text-[#0F172A]">
+        <div className="pt-2.5 border-t border-[#E2E8F0] dark:border-slate-700">
+          <div className="text-[14px] font-bold text-[#0F172A] dark:text-slate-50">
             3. Seu Custo
           </div>
-          <p className="text-[15px] text-[#334155] mt-0.5 leading-snug font-num">
+          <p className="text-[15px] text-[#334155] dark:text-slate-300 mt-0.5 leading-snug font-num">
             {costStatusText}
           </p>
         </div>
@@ -425,6 +427,7 @@ export function MaterialDetailScreen({
         historico={record.historico}
         previsoes={record.previsoes}
         tendencia={material.tendencia}
+        isDark={isDark}
       />
 
       {/* Ações Principais */}
@@ -432,12 +435,12 @@ export function MaterialDetailScreen({
         {copiedMsg && (
           <div
             role="status"
-            className="bg-[#DCFCE7] border border-[#86EFAC] text-[#15803D] rounded-2xl p-3.5 text-[15px] font-bold flex items-start gap-2.5"
+            className="bg-[#DCFCE7] dark:bg-emerald-950/80 border border-[#86EFAC] dark:border-emerald-700 text-[#15803D] dark:text-emerald-200 rounded-2xl p-3.5 text-[15px] font-bold flex items-start gap-2.5"
           >
             <Check className="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true" />
             <div>
               <div>Pedido copiado! Cole no WhatsApp do fornecedor:</div>
-              <div className="text-[14px] font-medium text-[#0F172A] mt-1">
+              <div className="text-[14px] font-medium text-[#0F172A] dark:text-slate-100 mt-1">
                 "{copiedMsg}"
               </div>
             </div>
@@ -447,7 +450,7 @@ export function MaterialDetailScreen({
         <button
           type="button"
           onClick={handleCopyWhatsApp}
-          className="w-full min-h-[52px] px-4 py-3 rounded-2xl bg-[#15803D] hover:bg-[#166534] active:scale-[0.99] text-white font-extrabold text-[17px] flex items-center justify-center gap-2.5 transition-transform"
+          className="w-full min-h-[52px] px-4 py-3 rounded-2xl bg-[#15803D] hover:bg-[#166534] dark:bg-emerald-600 dark:hover:bg-emerald-500 active:scale-[0.99] text-white font-extrabold text-[17px] flex items-center justify-center gap-2.5 transition-transform"
         >
           <Copy className="w-5 h-5 shrink-0" aria-hidden="true" />
           <span>Copiar pedido pro WhatsApp</span>
@@ -456,9 +459,9 @@ export function MaterialDetailScreen({
         <button
           type="button"
           onClick={() => onOpenSimulator(record.id)}
-          className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-[#F8FAFC] border-2 border-[#CBD5E1] hover:border-[#94A3B8] active:scale-[0.99] text-[#0F172A] font-bold text-[16px] flex items-center justify-center gap-2 transition-transform"
+          className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-[#F8FAFC] dark:bg-slate-800 border-2 border-[#CBD5E1] dark:border-slate-700 hover:border-[#94A3B8] dark:hover:border-slate-500 active:scale-[0.99] text-[#0F172A] dark:text-slate-50 font-bold text-[16px] flex items-center justify-center gap-2 transition-transform"
         >
-          <Calculator className="w-5 h-5 shrink-0 text-[#1D4ED8]" aria-hidden="true" />
+          <Calculator className="w-5 h-5 shrink-0 text-[#1D4ED8] dark:text-blue-300" aria-hidden="true" />
           <span>Simular outro cenário</span>
         </button>
       </section>

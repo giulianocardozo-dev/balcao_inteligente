@@ -5,12 +5,14 @@ interface PriceHistoryChartProps {
   historico: MonthlyPoint[];
   previsoes: ForecastPoint[];
   tendencia: PriceTrend;
+  isDark?: boolean;
 }
 
 export function PriceHistoryChart({
   historico,
   previsoes,
   tendencia,
+  isDark = false,
 }: PriceHistoryChartProps) {
   const last12 = historico.slice(-12);
   if (last12.length === 0) return null;
@@ -86,36 +88,54 @@ export function PriceHistoryChart({
   ];
   const bandPoints = [...bandTop, ...bandBottom].join(' ');
 
-  const trendStroke =
-    tendencia === 'alta'
-      ? '#B45309'
+  const trendStroke = isDark
+    ? tendencia === 'alta'
+      ? '#FBBF24'
       : tendencia === 'queda'
-      ? '#15803D'
-      : '#1D4ED8';
+      ? '#4ADE80'
+      : '#60A5FA'
+    : tendencia === 'alta'
+    ? '#B45309'
+    : tendencia === 'queda'
+    ? '#15803D'
+    : '#1D4ED8';
 
-  const bandFill =
-    tendencia === 'alta'
-      ? 'rgba(180, 83, 9, 0.16)'
+  const bandFill = isDark
+    ? tendencia === 'alta'
+      ? 'rgba(251, 191, 36, 0.22)'
       : tendencia === 'queda'
-      ? 'rgba(21, 128, 61, 0.14)'
-      : 'rgba(29, 78, 216, 0.14)';
+      ? 'rgba(74, 222, 128, 0.20)'
+      : 'rgba(96, 165, 250, 0.20)'
+    : tendencia === 'alta'
+    ? 'rgba(180, 83, 9, 0.16)'
+    : tendencia === 'queda'
+    ? 'rgba(21, 128, 61, 0.14)'
+    : 'rgba(29, 78, 216, 0.14)';
+
+  const gridStroke = isDark ? '#334155' : '#E2E8F0';
+  const baselineStroke = isDark ? '#475569' : '#CBD5E1';
+  const todayLineStroke = isDark ? '#64748B' : '#94A3B8';
+  const histStroke = isDark ? '#F8FAFC' : '#0F172A';
+  const dotOutline = isDark ? '#1E293B' : '#FFFFFF';
+  const axisLabelSecondary = isDark ? '#CBD5E1' : '#334155';
+  const axisLabelPrimary = isDark ? '#F8FAFC' : '#0F172A';
 
   const lastForecast = prevCoords[prevCoords.length - 1];
 
   return (
-    <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-2xl p-4">
+    <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl p-4">
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <h3 className="text-[16px] font-bold text-[#0F172A]">
+        <h3 className="text-[16px] font-bold text-[#0F172A] dark:text-slate-50">
           Preço nos últimos 12 meses e próximos 3
         </h3>
       </div>
 
       {/* Min, Max & 3-month forecast summary row */}
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-2 text-[13px] font-bold font-num">
-        <div className="text-[#334155]">
-          Mín: <span className="text-[#0F172A]">{formatBRL(yMin)}</span>
-          <span className="mx-1.5 text-[#94A3B8]" aria-hidden="true">·</span>
-          Máx: <span className="text-[#0F172A]">{formatBRL(yMax)}</span>
+        <div className="text-[#334155] dark:text-slate-300">
+          Mín: <span className="text-[#0F172A] dark:text-slate-50">{formatBRL(yMin)}</span>
+          <span className="mx-1.5 text-[#94A3B8] dark:text-slate-500" aria-hidden="true">·</span>
+          Máx: <span className="text-[#0F172A] dark:text-slate-50">{formatBRL(yMax)}</span>
         </div>
         <div style={{ color: trendStroke }}>
           Em 3 meses: {formatBRL(lastForecast ? lastForecast.prev : lastHist.price)}
@@ -135,7 +155,7 @@ export function PriceHistoryChart({
             y1={padTop}
             x2={width - padRight}
             y2={padTop}
-            stroke="#E2E8F0"
+            stroke={gridStroke}
             strokeWidth="1"
           />
           <line
@@ -143,7 +163,7 @@ export function PriceHistoryChart({
             y1={padTop + plotH / 2}
             x2={width - padRight}
             y2={padTop + plotH / 2}
-            stroke="#E2E8F0"
+            stroke={gridStroke}
             strokeWidth="1"
             strokeDasharray="3 3"
           />
@@ -152,7 +172,7 @@ export function PriceHistoryChart({
             y1={padTop + plotH}
             x2={width - padRight}
             y2={padTop + plotH}
-            stroke="#CBD5E1"
+            stroke={baselineStroke}
             strokeWidth="1"
           />
 
@@ -162,7 +182,7 @@ export function PriceHistoryChart({
             y1={padTop}
             x2={lastHist.x}
             y2={padTop + plotH}
-            stroke="#94A3B8"
+            stroke={todayLineStroke}
             strokeWidth="1"
             strokeDasharray="4 3"
           />
@@ -176,7 +196,7 @@ export function PriceHistoryChart({
           <path
             d={histPath}
             fill="none"
-            stroke="#0F172A"
+            stroke={histStroke}
             strokeWidth="2.75"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -200,8 +220,8 @@ export function PriceHistoryChart({
             cx={lastHist.x}
             cy={lastHist.y}
             r="5"
-            fill="#0F172A"
-            stroke="#FFFFFF"
+            fill={histStroke}
+            stroke={dotOutline}
             strokeWidth="2"
           />
 
@@ -213,7 +233,7 @@ export function PriceHistoryChart({
               cy={p.yPrev}
               r="4.5"
               fill={trendStroke}
-              stroke="#FFFFFF"
+              stroke={dotOutline}
               strokeWidth="1.5"
             />
           ))}
@@ -225,7 +245,7 @@ export function PriceHistoryChart({
             textAnchor="start"
             fontSize="11"
             fontWeight="600"
-            fill="#334155"
+            fill={axisLabelSecondary}
           >
             {formatMonthShort(histCoords[0].month)}
           </text>
@@ -235,7 +255,7 @@ export function PriceHistoryChart({
             textAnchor="middle"
             fontSize="11"
             fontWeight="700"
-            fill="#0F172A"
+            fill={axisLabelPrimary}
           >
             Hoje ({formatMonthShort(lastHist.month)})
           </text>
@@ -255,9 +275,9 @@ export function PriceHistoryChart({
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 pt-2 border-t border-[#E2E8F0] text-[13px] font-medium text-[#334155]">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 pt-2 border-t border-[#E2E8F0] dark:border-slate-700 text-[13px] font-medium text-[#334155] dark:text-slate-300">
         <span className="inline-flex items-center gap-1.5">
-          <span className="w-4 h-0.5 bg-[#0F172A] inline-block" />
+          <span className="w-4 h-0.5 bg-[#0F172A] dark:bg-slate-50 inline-block" />
           <span>Últimos 12 meses</span>
         </span>
         <span className="inline-flex items-center gap-1.5">
