@@ -525,7 +525,7 @@ export default function App() {
               }`}
             >
               <Package className="w-[22px] h-[22px]" aria-hidden="true" />
-              <span className="text-[12px] leading-none">Material</span>
+              <span className="text-[12px] leading-none">Estoque</span>
             </button>
 
             <button

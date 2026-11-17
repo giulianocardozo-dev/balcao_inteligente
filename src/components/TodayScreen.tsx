@@ -2,11 +2,13 @@ import { useState } from 'react';
 import {
   AlertTriangle,
   ArrowDownRight,
+  ArrowDownWideNarrow,
   ArrowRight,
   ArrowUpRight,
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  CircleDollarSign,
   Clock,
   Info,
   TrendingDown,
@@ -27,8 +29,12 @@ interface TodayScreenProps {
 
 const WELCOME_STORAGE_KEY = 'balcao_inteligente_welcome_open_v1';
 
+type TodayFilter = TrafficLightStatus | 'ECONOMIA' | 'ALL';
+type StockSortMode = 'default' | 'valor' | 'dias';
+
 export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
-  const [filterStatus, setFilterStatus] = useState<TrafficLightStatus | 'ALL'>('ALL');
+  const [filterStatus, setFilterStatus] = useState<TodayFilter>('ALL');
+  const [stockSortMode, setStockSortMode] = useState<StockSortMode>('default');
   const [showWelcome, setShowWelcome] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem(WELCOME_STORAGE_KEY);
@@ -50,20 +56,44 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
     });
   };
 
+  const cycleStockSort = () => {
+    setStockSortMode((prev) =>
+      prev === 'default' ? 'valor' : prev === 'valor' ? 'dias' : 'default'
+    );
+  };
+
   const countComprar = items.filter((i) => i.status === 'COMPRAR_AGORA').length;
   const countAntecipar = items.filter((i) => i.status === 'ANTECIPAR_COMPRA').length;
   const countNaoComprar = items.filter((i) => i.status === 'NAO_COMPRAR').length;
   const countAguardar = items.filter((i) => i.status === 'AGUARDAR').length;
+  const countEconomia = items.filter((i) => i.economiaEstimada > 0).length;
 
   const totalDinheiroParado = items.reduce((acc, i) => acc + i.dinheiroParado, 0);
   const totalEconomia45d = items.reduce((acc, i) => acc + i.economiaEstimada, 0);
 
-  const visibleItems =
+  const filteredItems =
     filterStatus === 'ALL'
       ? items
+      : filterStatus === 'ECONOMIA'
+      ? items.filter((i) => i.economiaEstimada > 0)
       : items.filter((i) => i.status === filterStatus);
 
-  const toggleFilter = (target: TrafficLightStatus) => {
+  const visibleItems =
+    stockSortMode === 'valor'
+      ? [...filteredItems].sort(
+          (a, b) =>
+            b.dinheiroParado - a.dinheiroParado ||
+            b.config.estoqueAtual - a.config.estoqueAtual
+        )
+      : stockSortMode === 'dias'
+      ? [...filteredItems].sort(
+          (a, b) =>
+            b.diasQueDura - a.diasQueDura ||
+            b.dinheiroParado - a.dinheiroParado
+        )
+      : filteredItems;
+
+  const toggleFilter = (target: Exclude<TodayFilter, 'ALL'>) => {
     setFilterStatus((prev) => (prev === target ? 'ALL' : target));
   };
 
@@ -106,28 +136,32 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
               <li className="flex items-start gap-2">
                 <span className="w-3 h-3 rounded-sm bg-[#B91C1C] dark:bg-red-400 shrink-0 mt-1.5" aria-hidden="true" />
                 <span>
-                  <strong className="text-[#B91C1C] dark:text-red-300">Atenção ao Estoque:</strong> Volume baixo no pátio — avalie a reposição para evitar falta ao cliente.
+                  <strong className="text-[#B91C1C] dark:text-red-300">Atenção ao Estoque:</strong> Pátio baixo. Avalie repor logo para não faltar ao cliente.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-3 h-3 rounded-sm bg-[#B45309] dark:bg-amber-400 shrink-0 mt-1.5" aria-hidden="true" />
                 <span>
-                  <strong className="text-[#B45309] dark:text-amber-300">Pressão de Alta:</strong> Estoque suficiente, mas a tendência estatística aponta alta nos próximos 30 dias.
+                  <strong className="text-[#B45309] dark:text-amber-300">Sinal de Alta:</strong> Estoque em dia, mas os dados apontam subida nos próximos 30 dias.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-3 h-3 rounded-sm bg-[#15803D] dark:bg-emerald-400 shrink-0 mt-1.5" aria-hidden="true" />
                 <span>
-                  <strong className="text-[#15803D] dark:text-emerald-300">Tendência de Acomodação:</strong> Estoque confortável e mercado com viés de queda ou estabilidade.
+                  <strong className="text-[#15803D] dark:text-emerald-300">Sinal de Queda:</strong> Estoque confortável e preços dando sinal de baixa.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-3 h-3 rounded-sm bg-[#1D4ED8] dark:bg-blue-400 shrink-0 mt-1.5" aria-hidden="true" />
                 <span>
-                  <strong className="text-[#1D4ED8] dark:text-blue-300">Mercado Estável:</strong> Pátio abastecido e preços firmes, sem pressão imediata de compra.
+                  <strong className="text-[#1D4ED8] dark:text-blue-300">Mercado Estável:</strong> Pátio abastecido e preços sem grandes mudanças recentes.
                 </span>
               </li>
             </ul>
+
+            <p className="text-[12.5px] italic text-[#334155] dark:text-slate-300 pt-2 border-t border-[#E2E8F0] dark:border-slate-700 leading-snug">
+              *Indicador estatístico de apoio. Não representa garantia de preço futuro ou recomendação financeira.
+            </p>
           </div>
         )}
       </section>
@@ -193,7 +227,7 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                 {countAntecipar}
               </div>
               <div className="text-[12px] font-bold text-[#B45309] dark:text-amber-200 mt-1 leading-tight">
-                Pressão de Alta
+                Sinal de Alta
               </div>
             </div>
           </button>
@@ -217,7 +251,7 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                 {countNaoComprar}
               </div>
               <div className="text-[12px] font-bold text-[#15803D] dark:text-emerald-200 mt-1 leading-tight">
-                Tendência de Acomodação
+                Sinal de Queda
               </div>
             </div>
           </button>
@@ -247,35 +281,117 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
 
       {/* 2 KPIs Financeiros Simples */}
       <section aria-label="Resumo financeiro do pátio" className="grid grid-cols-2 gap-3">
-        <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl p-3.5">
-          <div className="text-[13px] font-semibold text-[#334155] dark:text-slate-300 leading-snug">
+        <button
+          type="button"
+          onClick={cycleStockSort}
+          aria-pressed={stockSortMode !== 'default'}
+          className={`text-left rounded-2xl p-3.5 border-2 transition-transform active:scale-[0.98] flex flex-col justify-between focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400 ${
+            stockSortMode !== 'default'
+              ? 'bg-[#DBEAFE]/70 dark:bg-blue-950/85 border-[#1D4ED8] dark:border-blue-400 ring-2 ring-[#1D4ED8]/25 dark:ring-blue-400/40'
+              : 'bg-[#F8FAFC] dark:bg-slate-800 border-[#CBD5E1] dark:border-slate-700 hover:border-[#1D4ED8] dark:hover:border-blue-400'
+          }`}
+        >
+          <div
+            className={`text-[13px] font-semibold leading-snug ${
+              stockSortMode !== 'default'
+                ? 'text-[#1D4ED8] dark:text-blue-200'
+                : 'text-[#334155] dark:text-slate-300'
+            }`}
+          >
             Dinheiro parado no estoque
           </div>
-          <div className="text-[24px] leading-tight font-extrabold text-[#0F172A] dark:text-slate-50 mt-1.5 font-num">
-            {formatBRLWhole(totalDinheiroParado)}
+          <div className="mt-1.5">
+            <div className="text-[24px] leading-tight font-extrabold text-[#0F172A] dark:text-slate-50 font-num">
+              {formatBRLWhole(totalDinheiroParado)}
+            </div>
+            <div className="mt-1 space-y-1">
+              <div
+                className={`flex items-center justify-between gap-1 text-[12px] font-bold leading-tight ${
+                  stockSortMode !== 'default'
+                    ? 'text-[#1D4ED8] dark:text-blue-200'
+                    : 'text-[#334155] dark:text-slate-300'
+                }`}
+              >
+                <span>
+                  {stockSortMode === 'default'
+                    ? 'Maior → menor'
+                    : 'Maior → menor (ativo)'}
+                </span>
+                <ArrowDownWideNarrow className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              </div>
+              {stockSortMode !== 'default' && (
+                <div className="inline-block px-1.5 py-0.5 rounded-md bg-[#1D4ED8] dark:bg-blue-400 text-white dark:text-slate-950 text-[11px] font-extrabold leading-tight">
+                  {stockSortMode === 'valor'
+                    ? 'Por valor em estoque'
+                    : 'Por dias em estoque'}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </button>
 
-        <div className="bg-[#DCFCE7]/50 dark:bg-emerald-950/60 border border-[#86EFAC] dark:border-emerald-700 rounded-2xl p-3.5">
+        <button
+          type="button"
+          onClick={() => toggleFilter('ECONOMIA')}
+          aria-pressed={filterStatus === 'ECONOMIA'}
+          className={`text-left rounded-2xl p-3.5 border-2 transition-transform active:scale-[0.98] flex flex-col justify-between focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#15803D] dark:focus-visible:outline-emerald-400 ${
+            filterStatus === 'ECONOMIA'
+              ? 'bg-[#DCFCE7] dark:bg-emerald-950/90 border-[#15803D] dark:border-emerald-400 ring-2 ring-[#15803D]/25 dark:ring-emerald-400/40'
+              : 'bg-[#DCFCE7]/50 dark:bg-emerald-950/60 border-[#86EFAC] dark:border-emerald-700 hover:border-[#15803D] dark:hover:border-emerald-500'
+          }`}
+        >
           <div className="text-[13px] font-semibold text-[#15803D] dark:text-emerald-200 leading-snug">
             Economia possível (45 dias)
           </div>
-          <div className="text-[24px] leading-tight font-extrabold text-[#15803D] dark:text-emerald-100 mt-1.5 font-num">
-            {formatBRLWhole(totalEconomia45d)}
+          <div className="mt-1.5">
+            <div className="text-[24px] leading-tight font-extrabold text-[#15803D] dark:text-emerald-100 font-num">
+              {formatBRLWhole(totalEconomia45d)}
+            </div>
+            <div className="mt-1 flex items-center justify-between gap-1 text-[12px] font-bold text-[#15803D] dark:text-emerald-200">
+              <span>
+                {filterStatus === 'ECONOMIA'
+                  ? `Filtrando ${countEconomia} ${countEconomia === 1 ? 'item' : 'itens'}`
+                  : `Filtrar (${countEconomia} ${countEconomia === 1 ? 'item' : 'itens'})`}
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            </div>
           </div>
-        </div>
+        </button>
       </section>
 
       {/* Lista Priorizada de Materiais */}
       <section aria-label="Lista priorizada de materiais">
-        <div className="flex items-baseline justify-between mb-2.5">
+        <div className="flex items-baseline justify-between mb-2.5 gap-2">
           <h2 className="text-[18px] font-extrabold text-[#0F172A] dark:text-slate-50">
             Lista de materiais ({visibleItems.length})
           </h2>
-          <span className="text-[13px] font-medium text-[#334155] dark:text-slate-300">
-            Toque para abrir
-          </span>
+          {stockSortMode !== 'default' ? (
+            <span className="text-[13px] font-bold text-[#1D4ED8] dark:text-blue-300">
+              {stockSortMode === 'valor'
+                ? 'Maior → menor valor'
+                : 'Maior → menor dias'}
+            </span>
+          ) : (
+            <span className="text-[13px] font-medium text-[#334155] dark:text-slate-300">
+              Toque para abrir
+            </span>
+          )}
         </div>
+
+        {visibleItems.length === 0 && (
+          <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl p-5 text-center space-y-2.5">
+            <p className="text-[15px] font-semibold text-[#334155] dark:text-slate-300">
+              Nenhum material encontrado para este filtro no momento.
+            </p>
+            <button
+              type="button"
+              onClick={() => setFilterStatus('ALL')}
+              className="min-h-[44px] px-4 rounded-xl bg-[#1D4ED8] dark:bg-blue-600 text-white text-[14px] font-bold"
+            >
+              Ver todos os materiais
+            </button>
+          </div>
+        )}
 
         <div className="space-y-3">
           {visibleItems.map((item) => {
@@ -302,7 +418,16 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                       {item.record.insumo}
                     </h3>
                     <p className="text-[14px] font-medium text-[#334155] dark:text-slate-300 mt-0.5">
-                      No pátio: <span className="font-bold text-[#0F172A] dark:text-slate-50 font-num">{formatQty(item.config.estoqueAtual)}</span> {item.record.unidadeComercial}
+                      No pátio:{' '}
+                      <span className="font-bold text-[#0F172A] dark:text-slate-50 font-num">
+                        {formatQty(item.config.estoqueAtual)}
+                      </span>{' '}
+                      {item.record.unidadeComercial}
+                      {stockSortMode === 'valor' && (
+                        <span className="font-bold text-[#1D4ED8] dark:text-blue-300 font-num">
+                          {' '}· {formatBRLWhole(item.dinheiroParado)}
+                        </span>
+                      )}
                     </p>
                   </div>
                   <ChevronRight
@@ -315,14 +440,22 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                   <StatusChip status={item.status} />
 
                   <div className="text-right">
-                    <div className="text-[14px] font-bold text-[#0F172A] dark:text-slate-50 font-num">
+                    <div
+                      className={`text-[14px] font-bold font-num ${
+                        stockSortMode === 'dias'
+                          ? 'text-[#1D4ED8] dark:text-blue-300'
+                          : 'text-[#0F172A] dark:text-slate-50'
+                      }`}
+                    >
                       {item.diasQueDura >= 999
                         ? 'Sem giro recente'
                         : `Estoque dura ${item.diasQueDura} ${item.diasQueDura === 1 ? 'dia' : 'dias'}`}
                     </div>
                     <div
+                      title="Tendência prevista de preço em 45 dias"
                       className={`inline-flex items-center justify-end gap-1 text-[14px] font-bold font-num ${priceTrendTextColor}`}
                     >
+                      <CircleDollarSign className="w-4 h-4 shrink-0" aria-hidden="true" />
                       {isUp && <ArrowUpRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
                       {isDown && <ArrowDownRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
                       {!isUp && !isDown && <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
