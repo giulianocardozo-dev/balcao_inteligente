@@ -344,7 +344,7 @@ export default function App() {
         {/* Compact Sticky Header */}
         <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-[#CBD5E1] dark:border-slate-700 px-4 py-2">
           {/* Row 1: Brand Identity (unobstructed, zero truncation) */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 min-[390px]:gap-2.5">
             {iconError ? (
               <div
                 aria-hidden="true"
@@ -361,13 +361,18 @@ export default function App() {
                 className="w-10 h-10 rounded-xl object-contain shrink-0"
               />
             )}
-            <div className="min-w-0 flex-1">
-              <h1 className="font-brand font-bold text-[21px] text-[#0F172A] dark:text-slate-50 leading-none tracking-tight">
-                Balcão Inteligente
-              </h1>
-              <div className="text-[13px] font-semibold text-[#334155] dark:text-slate-300 leading-tight mt-1">
-                Depósito Oliveira
-              </div>
+
+            <h1 className="font-brand font-bold text-[22px] min-[390px]:text-[23px] text-[#0F172A] dark:text-slate-50 leading-none tracking-tight whitespace-nowrap shrink-0">
+              Balcão Inteligente
+            </h1>
+
+            <div
+              className="w-px h-10 bg-[#CBD5E1] dark:bg-slate-700 shrink-0"
+              aria-hidden="true"
+            />
+
+            <div className="min-w-0 flex-1 text-left text-[12px] min-[390px]:text-[13px] font-semibold text-[#334155] dark:text-slate-300 leading-tight">
+              Depósito Oliveira
             </div>
           </div>
 

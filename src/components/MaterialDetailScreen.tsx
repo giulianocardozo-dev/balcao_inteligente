@@ -464,7 +464,9 @@ export function MaterialDetailScreen({
 
         {/* Rodapé do Card (Disclaimer) */}
         <p className="text-[12.5px] italic text-[#475569] dark:text-slate-300 pt-1 leading-snug">
-          Estimativa baseada em índices públicos. Não garante preço futuro.
+          Estimativa baseada em índices públicos.
+          <br />
+          Não garante preço futuro.
         </p>
       </section>
 
