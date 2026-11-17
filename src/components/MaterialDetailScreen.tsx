@@ -10,6 +10,7 @@ import {
 import { EvaluatedMaterial, StoreInventoryConfig } from '../types/inventory';
 import {
   formatBRL,
+  formatDays,
   formatPercentSigned,
   formatQty,
   formatUnit,
@@ -92,12 +93,29 @@ export function MaterialDetailScreen({
   const custoTotalEstoque = config.estoqueAtual * config.custoMedio;
 
   const costDiffAbs = Math.abs(material.diferencaCustoReais);
+  const costDiffPctFormatted = Math.abs(material.diferencaCustoPct * 100)
+    .toFixed(1)
+    .replace('.', ',');
   const costStatusText =
     Math.abs(material.diferencaCustoPct) < 0.005
-      ? `Seu custo médio (${formatBRL(config.custoMedio)}) está igual ao preço de referência atual (${formatBRL(material.precoAtual)}).`
+      ? `Seu custo médio (${formatBRL(config.custoMedio)}) está em linha com a referência atual.`
       : material.diferencaCustoReais < 0
-      ? `Seu custo médio (${formatBRL(config.custoMedio)}) está ${formatBRL(costDiffAbs)} (${Math.abs(material.diferencaCustoPct * 100).toFixed(1).replace('.', ',')}%) mais barato que a referência atual (${formatBRL(material.precoAtual)}).`
-      : `Seu custo médio (${formatBRL(config.custoMedio)}) está ${formatBRL(costDiffAbs)} (${Math.abs(material.diferencaCustoPct * 100).toFixed(1).replace('.', ',')}%) acima da referência atual (${formatBRL(material.precoAtual)}). Vale negociar desconto.`;
+      ? `Seu custo médio (${formatBRL(config.custoMedio)}) está ${formatBRL(costDiffAbs)} (${costDiffPctFormatted}%) abaixo da referência atual (${formatBRL(material.precoAtual)}).`
+      : `Seu custo médio (${formatBRL(config.custoMedio)}) está ${formatBRL(costDiffAbs)} (${costDiffPctFormatted}%) acima da referência atual (${formatBRL(material.precoAtual)}).`;
+
+  const trendLabel =
+    material.tendencia === 'alta'
+      ? 'Tendência de Alta'
+      : material.tendencia === 'queda'
+      ? 'Tendência de Queda'
+      : 'Tendência Estável';
+
+  const trendTextColor =
+    material.tendencia === 'alta'
+      ? 'text-[#B45309] dark:text-amber-300'
+      : material.tendencia === 'queda'
+      ? 'text-[#15803D] dark:text-emerald-300'
+      : 'text-[#334155] dark:text-slate-300';
 
   return (
     <div className="space-y-4">
@@ -361,62 +379,93 @@ export function MaterialDetailScreen({
         </div>
       </section>
 
-      {/* 3 Explicações Diretas (Por que fazer isso?) */}
+      {/* 3 Cartões Empilhados (Por que fazer isso?) */}
       <section className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl p-4 space-y-3">
         <h3 className="text-[17px] font-extrabold text-[#0F172A] dark:text-slate-50">
           Por que fazer isso?
         </h3>
 
-        <div className="pt-1 border-t border-[#E2E8F0] dark:border-slate-700">
-          <div className="text-[14px] font-bold text-[#0F172A] dark:text-slate-50">
-            1. Seu Estoque
+        <div className="space-y-2.5">
+          {/* Card 1 — Seu Estoque (Simulação) */}
+          <div className="rounded-xl bg-white dark:bg-slate-900/90 border border-[#CBD5E1] dark:border-slate-700 p-3.5 space-y-1.5">
+            <div className="text-[13px] font-extrabold uppercase tracking-wide text-[#334155] dark:text-slate-300">
+              Seu Estoque (Simulação)
+            </div>
+            <div className="text-[14px] font-medium text-[#334155] dark:text-slate-300 leading-snug">
+              Pedir de novo com:{' '}
+              <strong className="block sm:inline text-[20px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num">
+                {formatQty(material.quandoPedirDeNovo)}{' '}
+                {formatUnit(record.unidadeComercial, material.quandoPedirDeNovo)}
+              </strong>
+            </div>
+            <div className="text-[14px] font-semibold text-[#334155] dark:text-slate-300 font-num">
+              Duração:{' '}
+              <span className="font-bold text-[#0F172A] dark:text-slate-100">
+                {material.diasQueDura >= 999
+                  ? 'sem giro recente'
+                  : `~${formatDays(material.diasQueDura)}`}
+              </span>{' '}
+              <span className="mx-1 text-[#94A3B8] dark:text-slate-500" aria-hidden="true">
+                |
+              </span>{' '}
+              Entrega:{' '}
+              <span className="font-bold text-[#0F172A] dark:text-slate-100">
+                ~{formatDays(config.diasEntrega)}
+              </span>
+            </div>
           </div>
-          <p className="text-[15px] text-[#334155] dark:text-slate-300 mt-0.5 leading-snug font-num">
-            {material.diasQueDura >= 999
-              ? 'Sem vendas registradas no mês'
-              : `Dura ${material.diasQueDura} ${material.diasQueDura === 1 ? 'dia' : 'dias'}`}{' '}
-            · Caminhão leva {config.diasEntrega}{' '}
-            {config.diasEntrega === 1 ? 'dia' : 'dias'} · Pedir de novo quando chegar em{' '}
-            <strong className="text-[#0F172A] dark:text-slate-50">
-              {formatQty(material.quandoPedirDeNovo)}{' '}
-              {formatUnit(record.unidadeComercial, material.quandoPedirDeNovo)}
-            </strong>
-            .
-          </p>
+
+          {/* Card 2 — Termômetro de Mercado (Tendência) */}
+          <div className="rounded-xl bg-white dark:bg-slate-900/90 border border-[#CBD5E1] dark:border-slate-700 p-3.5 space-y-1.5">
+            <div className="text-[13px] font-extrabold uppercase tracking-wide text-[#334155] dark:text-slate-300">
+              Termômetro de Mercado (Tendência)
+            </div>
+            <div className="space-y-1 text-[14px] text-[#334155] dark:text-slate-300 font-num">
+              <div>
+                Hoje:{' '}
+                <strong className="font-extrabold text-[#0F172A] dark:text-slate-50">
+                  {formatBRL(material.precoAtual)}
+                </strong>{' '}
+                <span className="text-[13px] font-medium text-[#475569] dark:text-slate-400">
+                  (Referência Varejo/Retira)
+                </span>
+              </div>
+              <div>
+                Em 45 dias:{' '}
+                <strong className="font-extrabold text-[#0F172A] dark:text-slate-50">
+                  ~{formatBRL(material.preco45d)}
+                </strong>{' '}
+                <span className={`font-bold ${trendTextColor}`}>
+                  ({formatPercentSigned(material.var45d)} · {trendLabel})
+                </span>
+              </div>
+              <div>
+                Em 3 meses:{' '}
+                <strong className="font-extrabold text-[#0F172A] dark:text-slate-50">
+                  ~{formatBRL(material.preco90d)}
+                </strong>{' '}
+                <span className="font-semibold text-[#334155] dark:text-slate-300">
+                  ({formatPercentSigned(material.var90d)})
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3 — Seu Custo */}
+          <div className="rounded-xl bg-white dark:bg-slate-900/90 border border-[#CBD5E1] dark:border-slate-700 p-3.5 space-y-1">
+            <div className="text-[13px] font-extrabold uppercase tracking-wide text-[#334155] dark:text-slate-300">
+              Seu Custo
+            </div>
+            <p className="text-[14px] font-medium text-[#0F172A] dark:text-slate-100 leading-snug font-num">
+              {costStatusText}
+            </p>
+          </div>
         </div>
 
-        <div className="pt-2.5 border-t border-[#E2E8F0] dark:border-slate-700">
-          <div className="text-[14px] font-bold text-[#0F172A] dark:text-slate-50">
-            2. O que vai acontecer com o preço
-          </div>
-          <p className="text-[15px] text-[#334155] dark:text-slate-300 mt-0.5 leading-snug font-num">
-            Hoje <strong className="text-[#0F172A] dark:text-slate-50">{formatBRL(material.precoAtual)}</strong> → Em 45 dias{' '}
-            <strong className="text-[#0F172A] dark:text-slate-50">{formatBRL(material.preco45d)}</strong> (
-            <span
-              className={
-                material.tendencia === 'alta'
-                  ? 'font-bold text-[#B45309] dark:text-amber-300'
-                  : material.tendencia === 'queda'
-                  ? 'font-bold text-[#15803D] dark:text-emerald-300'
-                  : 'font-bold text-[#334155] dark:text-slate-300'
-              }
-            >
-              {formatPercentSigned(material.var45d)}
-            </span>
-            ) · Em 3 meses{' '}
-            <strong className="text-[#0F172A] dark:text-slate-50">{formatBRL(material.preco90d)}</strong> (
-            {formatPercentSigned(material.var90d)}).
-          </p>
-        </div>
-
-        <div className="pt-2.5 border-t border-[#E2E8F0] dark:border-slate-700">
-          <div className="text-[14px] font-bold text-[#0F172A] dark:text-slate-50">
-            3. Seu Custo
-          </div>
-          <p className="text-[15px] text-[#334155] dark:text-slate-300 mt-0.5 leading-snug font-num">
-            {costStatusText}
-          </p>
-        </div>
+        {/* Rodapé do Card (Disclaimer) */}
+        <p className="text-[12.5px] italic text-[#475569] dark:text-slate-300 pt-1 leading-snug">
+          Estimativa baseada em índices públicos. Não garante preço futuro.
+        </p>
       </section>
 
       {/* Gráfico Simples (SVG leve) */}
