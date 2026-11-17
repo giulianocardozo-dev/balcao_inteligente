@@ -113,9 +113,11 @@ export function SimulateScreen({
           Calculadora de Balcão
         </h2>
         <p className="text-[14px] font-medium text-[#334155] dark:text-slate-300">
-          {mode === 'quando_pedir'
-            ? 'Antes de fechar com o vendedor, simule a situação do estoque.'
-            : 'Antes de fechar com o vendedor, simule a situação do preço.'}
+          Antes de fechar com o vendedor, simule a situação do{' '}
+          <strong className="font-extrabold text-[#0F172A] dark:text-slate-100">
+            {mode === 'quando_pedir' ? 'estoque' : 'preço'}
+          </strong>
+          .
         </p>
       </div>
 

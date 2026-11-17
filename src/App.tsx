@@ -544,7 +544,7 @@ export default function App() {
               }`}
             >
               <Calculator className="w-[22px] h-[22px]" aria-hidden="true" />
-              <span className="text-[12px] leading-none">Simular</span>
+              <span className="text-[12px] leading-none">Calculadora</span>
             </button>
 
             <button
