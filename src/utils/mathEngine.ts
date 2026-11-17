@@ -224,6 +224,198 @@ export function formatQty(value: number): string {
   return Math.round(value).toLocaleString('pt-BR');
 }
 
+const INVARIANT_UNITS = new Set([
+  'm³',
+  'm3',
+  'm²',
+  'm2',
+  'm',
+  'cm',
+  'mm',
+  'km',
+  'kg',
+  'g',
+  'mg',
+  't',
+  'ton',
+  'l',
+  'ml',
+  'un',
+  'unid',
+  'unid.',
+  'und',
+  'pc',
+  'pç',
+  'cx',
+  'sc',
+  'rl',
+  'pct',
+  'br',
+  'lt',
+  'gl',
+  'fd',
+  'mlh',
+]);
+
+const SINGULAR_TO_PLURAL_UNIT: Record<string, string> = {
+  saco: 'sacos',
+  barra: 'barras',
+  lata: 'latas',
+  rolo: 'rolos',
+  milheiro: 'milheiros',
+  unidade: 'unidades',
+  caixa: 'caixas',
+  peça: 'peças',
+  peca: 'pecas',
+  metro: 'metros',
+  litro: 'litros',
+  galão: 'galões',
+  galao: 'galoes',
+  balde: 'baldes',
+  tubo: 'tubos',
+  bloco: 'blocos',
+  tijolo: 'tijolos',
+  telha: 'telhas',
+  chapa: 'chapas',
+  placa: 'placas',
+  folha: 'folhas',
+  tábua: 'tábuas',
+  tabua: 'tabuas',
+  viga: 'vigas',
+  caibro: 'caibros',
+  ripa: 'ripas',
+  sarrafo: 'sarrafos',
+  pacote: 'pacotes',
+  fardo: 'fardos',
+  bisnaga: 'bisnagas',
+  frasco: 'frascos',
+  pote: 'potes',
+  cartucho: 'cartuchos',
+  bobina: 'bobinas',
+  tambor: 'tambores',
+  bombona: 'bombonas',
+  tonelada: 'toneladas',
+  kit: 'kits',
+  jogo: 'jogos',
+  par: 'pares',
+  cento: 'centos',
+  dúzia: 'dúzias',
+  duzia: 'duzias',
+  carrada: 'carradas',
+  caçamba: 'caçambas',
+  cacamba: 'cacambas',
+  palete: 'paletes',
+  pallet: 'pallets',
+  ampola: 'ampolas',
+  sachê: 'sachês',
+  sache: 'saches',
+};
+
+const PLURAL_TO_SINGULAR_UNIT: Record<string, string> = Object.fromEntries(
+  Object.entries(SINGULAR_TO_PLURAL_UNIT).map(([singular, plural]) => [plural, singular])
+);
+
+const COMPOUND_UNIT_PHRASES: Array<{ singular: string; plural: string }> = [
+  { singular: 'metro quadrado', plural: 'metros quadrados' },
+  { singular: 'metro linear', plural: 'metros lineares' },
+  { singular: 'metro cúbico', plural: 'metros cúbicos' },
+  { singular: 'metro cubico', plural: 'metros cubicos' },
+];
+
+function matchWordCasing(template: string, target: string): string {
+  if (!template) return target;
+  if (template === template.toUpperCase() && template !== template.toLowerCase()) {
+    return target.toUpperCase();
+  }
+  const first = template[0];
+  if (first === first.toUpperCase() && first !== first.toLowerCase()) {
+    return target[0].toUpperCase() + target.slice(1);
+  }
+  return target;
+}
+
+function inflectPortugueseUnitWord(word: string, plural: boolean): string {
+  const lower = word.toLowerCase();
+  if (INVARIANT_UNITS.has(lower)) return word;
+
+  if (!plural) {
+    const mappedSingular = PLURAL_TO_SINGULAR_UNIT[lower];
+    return mappedSingular ? matchWordCasing(word, mappedSingular) : word;
+  }
+
+  if (PLURAL_TO_SINGULAR_UNIT[lower]) {
+    return word;
+  }
+
+  const mappedPlural = SINGULAR_TO_PLURAL_UNIT[lower];
+  if (mappedPlural) {
+    return matchWordCasing(word, mappedPlural);
+  }
+
+  // Fallback for custom Excel alphabetic unit words (e.g. "bisnaga", "tambor")
+  if (!/^[a-zà-ú]{4,}$/i.test(lower) || lower.endsWith('s')) {
+    return word;
+  }
+
+  let inflected = lower;
+  if (lower.endsWith('ão')) {
+    inflected = `${lower.slice(0, -2)}ões`;
+  } else if (lower.endsWith('r') || lower.endsWith('z')) {
+    inflected = `${lower}es`;
+  } else if (
+    lower.endsWith('al') ||
+    lower.endsWith('el') ||
+    lower.endsWith('ol') ||
+    lower.endsWith('ul')
+  ) {
+    inflected = `${lower.slice(0, -1)}is`;
+  } else if (lower.endsWith('m')) {
+    inflected = `${lower.slice(0, -1)}ns`;
+  } else if (/[aeiouáéíóúâêô]$/i.test(lower)) {
+    inflected = `${lower}s`;
+  }
+
+  return matchWordCasing(word, inflected);
+}
+
+/**
+ * Formats a commercial unit according to Portuguese singular/plural agreement.
+ * Matches formatQty rounding: 1 -> singular, 0 or >= 2 -> plural.
+ * When qty is omitted, returns the plural form (for field labels).
+ */
+export function formatUnit(unit: string, qty?: number): string {
+  const trimmed = unit.trim();
+  if (!trimmed) return '';
+
+  const isPlural = qty === undefined ? true : Math.round(Math.abs(qty)) !== 1;
+  const lower = trimmed.toLowerCase();
+
+  if (INVARIANT_UNITS.has(lower)) {
+    return trimmed;
+  }
+
+  for (const phrase of COMPOUND_UNIT_PHRASES) {
+    if (lower === phrase.singular || lower === phrase.plural) {
+      const target = isPlural ? phrase.plural : phrase.singular;
+      return matchWordCasing(trimmed, target);
+    }
+  }
+
+  const firstSpaceIdx = trimmed.search(/\s+/);
+  if (firstSpaceIdx === -1) {
+    return inflectPortugueseUnitWord(trimmed, isPlural);
+  }
+
+  const head = trimmed.slice(0, firstSpaceIdx);
+  const rest = trimmed.slice(firstSpaceIdx);
+  return `${inflectPortugueseUnitWord(head, isPlural)}${rest}`;
+}
+
+export function formatDays(days: number): string {
+  const rounded = Math.round(days);
+  return `${rounded} ${Math.abs(rounded) === 1 ? 'dia' : 'dias'}`;
+}
+
 export function formatMonthShort(yyyyMm: string): string {
   const parts = yyyyMm.split('-');
   if (parts.length !== 2) return yyyyMm;

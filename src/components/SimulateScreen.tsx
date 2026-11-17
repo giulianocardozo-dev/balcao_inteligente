@@ -5,7 +5,9 @@ import {
   computeBuyOrWaitSimulation,
   computeReorderSimulation,
   formatBRL,
+  formatDays,
   formatQty,
+  formatUnit,
 } from '../utils/mathEngine';
 
 interface SimulateScreenProps {
@@ -218,7 +220,7 @@ export function SimulateScreen({
                 htmlFor="sim-vendas-30d"
                 className="block text-[14px] font-bold text-[#334155] dark:text-slate-200 mb-1.5"
               >
-                Vendas nos últimos 30 dias ({record.unidadeComercial})
+                Vendas nos últimos 30 dias ({formatUnit(record.unidadeComercial)})
               </label>
               <div className="flex items-center gap-2">
                 <button
@@ -255,7 +257,7 @@ export function SimulateScreen({
                 htmlFor="sim-estoque-atual"
                 className="block text-[14px] font-bold text-[#334155] dark:text-slate-200 mb-1.5"
               >
-                Estoque atual no pátio ({record.unidadeComercial})
+                Estoque atual no pátio ({formatUnit(record.unidadeComercial)})
               </label>
               <div className="flex items-center gap-2">
                 <button
@@ -300,28 +302,27 @@ export function SimulateScreen({
             </div>
             <div className="text-[26px] leading-tight font-extrabold text-[#0F172A] dark:text-slate-50 mt-1 font-num">
               Pedir de novo quando chegar em {formatQty(sim1.quandoPedirDeNovo)}{' '}
-              {record.unidadeComercial}
+              {formatUnit(record.unidadeComercial, sim1.quandoPedirDeNovo)}
             </div>
 
             <div className="mt-3 pt-3 border-t border-black/10 dark:border-white/15 space-y-1.5 text-[15px] font-semibold text-[#0F172A] dark:text-slate-100 font-num">
               <div>
                 Estoque dura{' '}
                 <strong>
-                  {sim1.diasQueDura >= 999
-                    ? 'sem giro'
-                    : `${sim1.diasQueDura} ${sim1.diasQueDura === 1 ? 'dia' : 'dias'}`}
+                  {sim1.diasQueDura >= 999 ? 'sem giro' : formatDays(sim1.diasQueDura)}
                 </strong>
               </div>
               {sim1.jaPassouDaHora ? (
                 <div className="text-[#B91C1C] dark:text-red-200 font-extrabold">
                   Atenção ao Estoque: já chegou na hora de pedir! Sugestão de pedido:{' '}
-                  {formatQty(sim1.quantidadeSugerida)} {record.unidadeComercial}.
+                  {formatQty(sim1.quantidadeSugerida)}{' '}
+                  {formatUnit(record.unidadeComercial, sim1.quantidadeSugerida)}.
                 </div>
               ) : (
                 <div className="text-[#1D4ED8] dark:text-blue-200 font-bold">
-                  Você ainda tem cerca de{' '}
-                  {sim1.diasAtePedir >= 999 ? 'vários' : sim1.diasAtePedir} dias até
-                  atingir esse nível.
+                  {sim1.diasAtePedir >= 999
+                    ? 'Você ainda tem vários dias até atingir esse nível.'
+                    : `Você ainda tem cerca de ${formatDays(sim1.diasAtePedir)} até atingir esse nível.`}
                 </div>
               )}
             </div>
@@ -337,7 +338,7 @@ export function SimulateScreen({
                 htmlFor="sim-quantidade"
                 className="block text-[14px] font-bold text-[#334155] dark:text-slate-200 mb-1.5"
               >
-                Quantidade que quer comprar ({record.unidadeComercial})
+                Quantidade que quer comprar ({formatUnit(record.unidadeComercial)})
               </label>
               <div className="flex items-center gap-2">
                 <button
@@ -464,9 +465,10 @@ export function SimulateScreen({
                   Risco de faltar produto no pátio!
                 </div>
                 <p className="text-[14px] font-semibold text-[#0F172A] dark:text-slate-100 mt-0.5 leading-snug font-num">
-                  Seu estoque dura {currentMaterial.diasQueDura} dias e o caminhão leva{' '}
-                  {currentMaterial.config.diasEntrega} dias. Se esperar {diasEsperar} dias,
-                  você fica cerca de {sim2.diasSemProduto} dias sem mercadoria.
+                  Seu estoque dura {formatDays(currentMaterial.diasQueDura)} e o caminhão leva{' '}
+                  {formatDays(currentMaterial.config.diasEntrega)}. Se esperar{' '}
+                  {formatDays(diasEsperar)}, você fica cerca de {formatDays(sim2.diasSemProduto)}{' '}
+                  sem mercadoria.
                 </p>
               </div>
             </div>
@@ -491,12 +493,12 @@ export function SimulateScreen({
               />
               <div>
                 <div className="text-[14px] font-bold text-[#334155] dark:text-slate-200">
-                  Veredito para {formatQty(quantidade)} {record.unidadeComercial}
+                  Veredito para {formatQty(quantidade)} {formatUnit(record.unidadeComercial, quantidade)}
                 </div>
                 <div className="text-[26px] leading-tight font-extrabold text-[#0F172A] dark:text-slate-50 mt-1 font-num">
                   {sim2.saldoComprarHoje >= 0
                     ? `Comprar hoje economiza ${formatBRL(sim2.saldoComprarHoje)}`
-                    : `Esperar ${diasEsperar} dias economiza ${formatBRL(Math.abs(sim2.saldoComprarHoje))}`}
+                    : `Esperar ${formatDays(diasEsperar)} economiza ${formatBRL(Math.abs(sim2.saldoComprarHoje))}`}
                 </div>
               </div>
             </div>

@@ -214,7 +214,8 @@ export function ForecastUploadScreen({
                 : 'Base ativa: Dados de demonstração'}
             </div>
             <div className="text-[13px] font-medium text-[#334155] dark:text-slate-300">
-              {sourceMeta.ufCount} estados · {sourceMeta.materialCount} materiais
+              {sourceMeta.ufCount} {sourceMeta.ufCount === 1 ? 'estado' : 'estados'} ·{' '}
+              {sourceMeta.materialCount} {sourceMeta.materialCount === 1 ? 'material' : 'materiais'}
               {sourceMeta.importedAt ? ` · Atualizado em ${sourceMeta.importedAt}` : ''}
             </div>
           </div>
@@ -250,7 +251,8 @@ export function ForecastUploadScreen({
       <section aria-label={`Resumo de preços em ${selectedUf}`}>
         <div className="flex items-baseline justify-between mb-2">
           <h3 className="text-[17px] font-extrabold text-[#0F172A] dark:text-slate-50">
-            Resumo em {selectedUf} ({evaluatedItems.length} materiais)
+            Resumo em {selectedUf} ({evaluatedItems.length}{' '}
+            {evaluatedItems.length === 1 ? 'material' : 'materiais'})
           </h3>
           <span className="text-[13px] font-medium text-[#334155] dark:text-slate-300">
             Toque na linha

@@ -19,6 +19,7 @@ import {
   formatBRLWhole,
   formatPercentSigned,
   formatQty,
+  formatUnit,
 } from '../utils/mathEngine';
 import { STATUS_META, StatusChip } from './StatusVisuals';
 
@@ -422,7 +423,7 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                       <span className="font-bold text-[#0F172A] dark:text-slate-50 font-num">
                         {formatQty(item.config.estoqueAtual)}
                       </span>{' '}
-                      {item.record.unidadeComercial}
+                      {formatUnit(item.record.unidadeComercial, item.config.estoqueAtual)}
                       {stockSortMode === 'valor' && (
                         <span className="font-bold text-[#1D4ED8] dark:text-blue-300 font-num">
                           {' '}· {formatBRLWhole(item.dinheiroParado)}

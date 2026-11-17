@@ -12,6 +12,7 @@ import {
   formatBRL,
   formatPercentSigned,
   formatQty,
+  formatUnit,
 } from '../utils/mathEngine';
 import { PriceHistoryChart } from './PriceHistoryChart';
 import { STATUS_META, StatusIcon } from './StatusVisuals';
@@ -46,7 +47,7 @@ export function MaterialDetailScreen({
       : Math.max(1, Math.ceil(config.vendas30d));
 
   const handleCopyWhatsApp = async () => {
-    const text = `Olá! Preciso cotar ${formatQty(orderQty)} ${record.unidadeComercial} de ${record.insumo} para entrega aqui na loja. Qual o melhor preço e prazo?`;
+    const text = `Olá! Preciso cotar ${formatQty(orderQty)} ${formatUnit(record.unidadeComercial, orderQty)} de ${record.insumo} para entrega aqui na loja. Qual o melhor preço e prazo?`;
 
     try {
       await navigator.clipboard.writeText(text);
@@ -189,7 +190,7 @@ export function MaterialDetailScreen({
             </div>
             <div className="text-[13px] font-semibold text-[#334155] dark:text-slate-200">
               {material.quantidadeSugerida > 0
-                ? record.unidadeComercial
+                ? formatUnit(record.unidadeComercial, material.quantidadeSugerida)
                 : 'Não precisa pedir agora'}
             </div>
           </div>
@@ -216,14 +217,9 @@ export function MaterialDetailScreen({
 
       {/* Edição Rápida do Estoque da Loja (Inline) */}
       <section className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl p-4 space-y-3.5">
-        <div className="flex items-baseline justify-between gap-2">
-          <h3 className="text-[17px] font-extrabold text-[#0F172A] dark:text-slate-50">
-            Ajustar números da sua loja
-          </h3>
-          <span className="text-[13px] font-semibold text-[#15803D] dark:text-emerald-300">
-            Salva na hora
-          </span>
-        </div>
+        <h3 className="text-[17px] font-extrabold text-[#0F172A] dark:text-slate-50">
+          Ajustar números da sua loja
+        </h3>
 
         {/* Estoque Atual */}
         <div>
@@ -231,7 +227,7 @@ export function MaterialDetailScreen({
             htmlFor="edit-estoque-atual"
             className="block text-[14px] font-bold text-[#334155] dark:text-slate-200 mb-1.5"
           >
-            Estoque atual no pátio ({record.unidadeComercial})
+            Estoque atual no pátio ({formatUnit(record.unidadeComercial)})
           </label>
           <div className="flex items-center gap-2">
             <button
@@ -268,7 +264,7 @@ export function MaterialDetailScreen({
             htmlFor="edit-vendas-mes"
             className="block text-[14px] font-bold text-[#334155] dark:text-slate-200 mb-1.5"
           >
-            Vendas no mês ({record.unidadeComercial} nos últimos 30 dias)
+            Vendas no mês ({formatUnit(record.unidadeComercial)} nos últimos 30 dias)
           </label>
           <div className="flex items-center gap-2">
             <button
@@ -382,7 +378,8 @@ export function MaterialDetailScreen({
             · Caminhão leva {config.diasEntrega}{' '}
             {config.diasEntrega === 1 ? 'dia' : 'dias'} · Pedir de novo quando chegar em{' '}
             <strong className="text-[#0F172A] dark:text-slate-50">
-              {formatQty(material.quandoPedirDeNovo)} {record.unidadeComercial}
+              {formatQty(material.quandoPedirDeNovo)}{' '}
+              {formatUnit(record.unidadeComercial, material.quandoPedirDeNovo)}
             </strong>
             .
           </p>
