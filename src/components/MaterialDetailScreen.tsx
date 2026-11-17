@@ -5,8 +5,10 @@ import {
   Check,
   Copy,
   Minus,
+  Newspaper,
   Plus,
 } from 'lucide-react';
+import { getNewsForMaterial } from '../data/marketNews';
 import { EvaluatedMaterial, StoreInventoryConfig } from '../types/inventory';
 import {
   formatBRL,
@@ -15,6 +17,7 @@ import {
   formatQty,
   formatUnit,
 } from '../utils/mathEngine';
+import { NewsCard } from './NewsCard';
 import { PriceHistoryChart } from './PriceHistoryChart';
 import { STATUS_META, StatusIcon } from './StatusVisuals';
 
@@ -41,6 +44,7 @@ export function MaterialDetailScreen({
 
   const { record, config } = material;
   const meta = STATUS_META[material.status];
+  const relatedNews = getNewsForMaterial(record.id, record.insumo, 2);
 
   const orderQty =
     material.quantidadeSugerida > 0
@@ -513,6 +517,32 @@ export function MaterialDetailScreen({
           <span>Simular outro cenário</span>
         </button>
       </section>
+
+      {/* Notícias Recentes vinculadas ao NCM deste material */}
+      {relatedNews.length > 0 && (
+        <section aria-label="Notícias recentes que impactam este material" className="space-y-3 pt-2">
+          <div className="flex items-center gap-2">
+            <Newspaper
+              className="w-5 h-5 text-[#1D4ED8] dark:text-blue-300 shrink-0"
+              aria-hidden="true"
+            />
+            <h3 className="text-[17px] font-extrabold text-[#0F172A] dark:text-slate-50 leading-snug">
+              Notícias Recentes que Impactam este Material
+            </h3>
+          </div>
+
+          <div className="space-y-3">
+            {relatedNews.map((newsItem) => (
+              <NewsCard
+                key={newsItem.id}
+                item={newsItem}
+                compact
+                onOpenCalculator={() => onOpenSimulator(record.id)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

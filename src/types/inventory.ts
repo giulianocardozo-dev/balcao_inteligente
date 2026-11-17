@@ -6,7 +6,49 @@ export type TrafficLightStatus =
 
 export type PriceTrend = 'alta' | 'queda' | 'estavel';
 
-export type AppTab = 'hoje' | 'detalhe' | 'simular' | 'previsao';
+export type AppTab = 'hoje' | 'detalhe' | 'simular' | 'previsao' | 'noticias';
+
+export type NewsCategory =
+  | 'todos'
+  | 'aco'
+  | 'cimento'
+  | 'pvc'
+  | 'tintas'
+  | 'eletrica'
+  | 'agregados'
+  | 'ceramica';
+
+export type NewsSignal = 'ALTA' | 'QUEDA' | 'ATENCAO' | 'ESTAVEL';
+
+export type NewsTimeRange = '24h' | 'semana' | 'mes';
+
+export type ApprovedNewsSource =
+  | 'Valor Econômico'
+  | 'InfoMoney'
+  | 'Exame'
+  | 'Money Times'
+  | 'g1 Economia'
+  | 'CNN Brasil'
+  | 'Agência Brasil';
+
+export interface MarketNewsItem {
+  id: string;
+  materialId: string;
+  materialNome: string;
+  ncm: string;
+  categoria: Exclude<NewsCategory, 'todos'>;
+  fonte: ApprovedNewsSource;
+  articleUrl: string;
+  publishedAt: string; // ISO 8601 UTC/offset timestamp
+  dataLabel: string;
+  ordemRecencia: number; // smaller = more recent
+  sinal: NewsSignal;
+  sinalLabel: string;
+  titulo: string;
+  gatilhos: string;
+  impactoBalcao: string;
+  destaqueCor: 'amarelo' | 'azul';
+}
 
 export interface MonthlyPoint {
   month: string; // YYYY-MM

@@ -9,6 +9,25 @@ export interface ParsedExcelResult {
   forecastMonths: string[];
 }
 
+export function isExcludedMaterial(codigoSinapi: string, insumo: string): boolean {
+  const code = codigoSinapi.trim();
+  if (code === '00000032' || code === '00000337') {
+    return true;
+  }
+  const normalized = insumo
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+  if (normalized.includes('vergalhao ca-50 8 mm') || normalized.includes('vergalhao ca-50 8mm')) {
+    return true;
+  }
+  if (normalized.includes('arame recozido')) {
+    return true;
+  }
+  return false;
+}
+
 function parsePtNumber(val: unknown): number | null {
   if (typeof val === 'number') {
     return Number.isFinite(val) ? val : null;
@@ -141,6 +160,7 @@ export function parseSinapiWorkbook(buffer: ArrayBuffer): ParsedExcelResult {
     const codigoRaw = codigoKey ? String(row[codigoKey] ?? '').trim() : '';
     const unidadeRaw = unidadeKey ? String(row[unidadeKey] ?? '').trim() : 'unid';
     const id = codigoRaw || insumoRaw.toLowerCase();
+    if (isExcludedMaterial(codigoRaw || id, insumoRaw)) continue;
 
     const historico: MonthlyPoint[] = [];
     for (const hc of histCols) {

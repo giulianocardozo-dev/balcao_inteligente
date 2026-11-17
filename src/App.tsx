@@ -6,6 +6,7 @@ import {
   Loader2,
   LocateFixed,
   Moon,
+  Newspaper,
   Package,
   Sun,
 } from 'lucide-react';
@@ -14,6 +15,7 @@ import {
   buildDefaultStoreConfigs,
 } from './data/defaultDataset';
 import { ForecastUploadScreen } from './components/ForecastUploadScreen';
+import { MarketNewsScreen } from './components/MarketNewsScreen';
 import { MaterialDetailScreen } from './components/MaterialDetailScreen';
 import { SimulateScreen } from './components/SimulateScreen';
 import { TodayScreen } from './components/TodayScreen';
@@ -25,6 +27,7 @@ import {
   StoreInventoryConfig,
 } from './types/inventory';
 import { evaluateMaterial, statusPriority } from './utils/mathEngine';
+import { isExcludedMaterial } from './utils/excelHandler';
 import { detectUfFromCoordinates } from './utils/ufGeolocation';
 
 const STORAGE_KEYS = {
@@ -41,7 +44,7 @@ type ThemeMode = 'light' | 'dark';
 const DEFAULT_META: DataSourceMeta = {
   type: 'demo',
   ufCount: 27,
-  materialCount: 12,
+  materialCount: 10,
 };
 
 function safeReadJson<T>(key: string): T | null {
@@ -100,7 +103,13 @@ export default function App() {
     })()
   );
 
-  const allRecords = importedRecords ?? defaultDataset;
+  const allRecords = useMemo(
+    () =>
+      (importedRecords ?? defaultDataset).filter(
+        (r) => !isExcludedMaterial(r.codigoSinapi || r.id, r.insumo)
+      ),
+    [importedRecords, defaultDataset]
+  );
 
   const availableUfs = useMemo(() => {
     const set = new Set<string>();
@@ -497,6 +506,10 @@ export default function App() {
               onSelectMaterial={openMaterialDetail}
             />
           )}
+
+          {activeTab === 'noticias' && (
+            <MarketNewsScreen onOpenCalculator={openSimulator} />
+          )}
         </main>
 
         {/* Fixed Bottom Navigation */}
@@ -504,61 +517,85 @@ export default function App() {
           aria-label="Navegação principal"
           className="fixed md:sticky bottom-0 left-0 right-0 md:left-auto md:right-auto z-40 w-full max-w-[440px] mx-auto bg-white dark:bg-slate-900 border-t border-[#CBD5E1] dark:border-slate-700 pb-safe"
         >
-          <div className="grid grid-cols-4 h-[64px]">
+          <div className="grid grid-cols-5 h-[64px]">
             <button
               type="button"
               onClick={() => switchTab('hoje')}
               aria-current={activeTab === 'hoje' ? 'page' : undefined}
-              className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] px-0.5 transition-colors ${
                 activeTab === 'hoje'
                   ? 'text-[#15803D] dark:text-emerald-300 font-extrabold bg-[#DCFCE7]/40 dark:bg-emerald-950/60'
                   : 'text-[#334155] dark:text-slate-300 font-semibold hover:text-[#0F172A] dark:hover:text-slate-50'
               }`}
             >
-              <Home className="w-[22px] h-[22px]" aria-hidden="true" />
-              <span className="text-[12px] leading-none">Hoje</span>
+              <Home className="w-[21px] h-[21px] shrink-0" aria-hidden="true" />
+              <span className="text-[11px] min-[390px]:text-[11.5px] leading-none whitespace-nowrap">
+                Hoje
+              </span>
             </button>
 
             <button
               type="button"
               onClick={() => switchTab('detalhe')}
               aria-current={activeTab === 'detalhe' ? 'page' : undefined}
-              className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] px-0.5 transition-colors ${
                 activeTab === 'detalhe'
                   ? 'text-[#15803D] dark:text-emerald-300 font-extrabold bg-[#DCFCE7]/40 dark:bg-emerald-950/60'
                   : 'text-[#334155] dark:text-slate-300 font-semibold hover:text-[#0F172A] dark:hover:text-slate-50'
               }`}
             >
-              <Package className="w-[22px] h-[22px]" aria-hidden="true" />
-              <span className="text-[12px] leading-none">Estoque</span>
+              <Package className="w-[21px] h-[21px] shrink-0" aria-hidden="true" />
+              <span className="text-[11px] min-[390px]:text-[11.5px] leading-none whitespace-nowrap">
+                Estoque
+              </span>
             </button>
 
             <button
               type="button"
               onClick={() => switchTab('simular')}
               aria-current={activeTab === 'simular' ? 'page' : undefined}
-              className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] px-0.5 transition-colors ${
                 activeTab === 'simular'
                   ? 'text-[#15803D] dark:text-emerald-300 font-extrabold bg-[#DCFCE7]/40 dark:bg-emerald-950/60'
                   : 'text-[#334155] dark:text-slate-300 font-semibold hover:text-[#0F172A] dark:hover:text-slate-50'
               }`}
             >
-              <Calculator className="w-[22px] h-[22px]" aria-hidden="true" />
-              <span className="text-[12px] leading-none">Calculadora</span>
+              <Calculator className="w-[21px] h-[21px] shrink-0" aria-hidden="true" />
+              <span className="text-[11px] min-[390px]:text-[11.5px] leading-none whitespace-nowrap">
+                Calculadora
+              </span>
             </button>
 
             <button
               type="button"
               onClick={() => switchTab('previsao')}
               aria-current={activeTab === 'previsao' ? 'page' : undefined}
-              className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] px-0.5 transition-colors ${
                 activeTab === 'previsao'
                   ? 'text-[#15803D] dark:text-emerald-300 font-extrabold bg-[#DCFCE7]/40 dark:bg-emerald-950/60'
                   : 'text-[#334155] dark:text-slate-300 font-semibold hover:text-[#0F172A] dark:hover:text-slate-50'
               }`}
             >
-              <FileSpreadsheet className="w-[22px] h-[22px]" aria-hidden="true" />
-              <span className="text-[12px] leading-none">Previsão</span>
+              <FileSpreadsheet className="w-[21px] h-[21px] shrink-0" aria-hidden="true" />
+              <span className="text-[11px] min-[390px]:text-[11.5px] leading-none whitespace-nowrap">
+                Previsão
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => switchTab('noticias')}
+              aria-current={activeTab === 'noticias' ? 'page' : undefined}
+              className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] px-0.5 transition-colors ${
+                activeTab === 'noticias'
+                  ? 'text-[#15803D] dark:text-emerald-300 font-extrabold bg-[#DCFCE7]/40 dark:bg-emerald-950/60'
+                  : 'text-[#334155] dark:text-slate-300 font-semibold hover:text-[#0F172A] dark:hover:text-slate-50'
+              }`}
+            >
+              <Newspaper className="w-[21px] h-[21px] shrink-0" aria-hidden="true" />
+              <span className="text-[11px] min-[390px]:text-[11.5px] leading-none whitespace-nowrap">
+                Notícias
+              </span>
             </button>
           </div>
         </nav>
