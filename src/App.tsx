@@ -342,63 +342,51 @@ export default function App() {
     <div className="min-h-screen w-full md:py-4 flex justify-center bg-white md:bg-[#F1F5F9] dark:bg-slate-950 md:dark:bg-slate-950">
       <div className="w-full max-w-[440px] min-h-screen md:min-h-[calc(100vh-2rem)] bg-white dark:bg-slate-900 md:border md:border-[#CBD5E1] dark:md:border-slate-700 md:rounded-3xl md:overflow-hidden flex flex-col relative">
         {/* Compact Sticky Header */}
-        <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-[#CBD5E1] dark:border-slate-700 px-4 py-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              {iconError ? (
-                <div
-                  aria-hidden="true"
-                  className="w-10 h-10 min-[390px]:w-11 min-[390px]:h-11 rounded-xl bg-[#0A2B66] text-white flex items-center justify-center font-brand text-[16px] shrink-0"
-                >
-                  BI
-                </div>
-              ) : (
-                <img
-                  src="/assets/aistudio/_cone_BI_em_Bloco_de_Bet_o_6a6c26ff.png"
-                  alt="Balcão Inteligente"
-                  referrerPolicy="no-referrer"
-                  onError={() => setIconError(true)}
-                  className="w-10 h-10 min-[390px]:w-11 min-[390px]:h-11 rounded-xl object-contain shrink-0"
-                />
-              )}
-              <div className="min-w-0">
-                <h1 className="font-brand font-bold text-[19px] min-[390px]:text-[22px] text-[#0F172A] dark:text-slate-50 leading-tight tracking-tight truncate">
-                  Balcão Inteligente
-                </h1>
-                <div className="text-[13px] font-medium text-[#334155] dark:text-slate-300 truncate">
-                  Depósito Oliveira
-                </div>
+        <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-[#CBD5E1] dark:border-slate-700 px-4 py-2">
+          {/* Row 1: Brand Identity (unobstructed, zero truncation) */}
+          <div className="flex items-center gap-2.5">
+            {iconError ? (
+              <div
+                aria-hidden="true"
+                className="w-10 h-10 rounded-xl bg-[#0A2B66] text-white flex items-center justify-center font-brand text-[16px] shrink-0"
+              >
+                BI
+              </div>
+            ) : (
+              <img
+                src="/assets/aistudio/_cone_BI_em_Bloco_de_Bet_o_6a6c26ff.png"
+                alt="Balcão Inteligente"
+                referrerPolicy="no-referrer"
+                onError={() => setIconError(true)}
+                className="w-10 h-10 rounded-xl object-contain shrink-0"
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              <h1 className="font-brand font-bold text-[21px] text-[#0F172A] dark:text-slate-50 leading-none tracking-tight">
+                Balcão Inteligente
+              </h1>
+              <div className="text-[13px] font-semibold text-[#334155] dark:text-slate-300 leading-tight mt-1">
+                Depósito Oliveira
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={toggleTheme}
-                aria-pressed={isDark}
-                aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
-                title={isDark ? 'Modo claro' : 'Modo escuro'}
-                className="w-11 h-11 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 flex items-center justify-center text-[#0F172A] dark:text-amber-300 hover:border-[#94A3B8] dark:hover:border-slate-400 active:bg-[#E2E8F0] dark:active:bg-slate-700 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
-              >
-                {isDark ? (
-                  <Sun className="w-[18px] h-[18px]" aria-hidden="true" />
-                ) : (
-                  <Moon className="w-[18px] h-[18px]" aria-hidden="true" />
-                )}
-              </button>
-
+          {/* Row 2: Region & Theme Utility Bar (44px accessible touch targets) */}
+          <div className="mt-1.5 pt-1.5 border-t border-[#E2E8F0] dark:border-slate-800 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => detectUserUf(true)}
                 aria-label="Detectar estado pela minha localização"
                 title="Usar minha localização"
-                className="w-11 h-11 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 flex items-center justify-center text-[#0F172A] dark:text-slate-50 hover:border-[#94A3B8] dark:hover:border-slate-400 active:bg-[#E2E8F0] dark:active:bg-slate-700 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
+                className="min-h-[44px] px-2.5 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 inline-flex items-center gap-1.5 text-[13px] font-bold text-[#0F172A] dark:text-slate-100 hover:border-[#94A3B8] dark:hover:border-slate-400 active:bg-[#E2E8F0] dark:active:bg-slate-700 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
               >
                 {geoLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-[#1D4ED8] dark:text-blue-300" aria-hidden="true" />
+                  <Loader2 className="w-4 h-4 animate-spin text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
                 ) : (
-                  <LocateFixed className="w-4 h-4 text-[#1D4ED8] dark:text-blue-300" aria-hidden="true" />
+                  <LocateFixed className="w-4 h-4 text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
                 )}
+                <span>Localizar</span>
               </button>
 
               <label htmlFor="uf-selector" className="sr-only">
@@ -418,7 +406,7 @@ export default function App() {
                   setGeoNotice(null);
                   setSelectedUf(nextUf);
                 }}
-                className="min-h-[44px] px-2.5 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 text-[15px] font-extrabold text-[#0F172A] dark:text-slate-50 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
+                className="min-h-[44px] px-2.5 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 text-[14px] font-extrabold text-[#0F172A] dark:text-slate-50 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
               >
                 {availableUfs.map((uf) => (
                   <option key={uf} value={uf}>
@@ -427,6 +415,27 @@ export default function App() {
                 ))}
               </select>
             </div>
+
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-pressed={isDark}
+              aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
+              title={isDark ? 'Modo claro' : 'Modo escuro'}
+              className="min-h-[44px] px-2.5 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 inline-flex items-center gap-1.5 text-[13px] font-bold text-[#0F172A] dark:text-slate-100 hover:border-[#94A3B8] dark:hover:border-slate-400 active:bg-[#E2E8F0] dark:active:bg-slate-700 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400 shrink-0"
+            >
+              {isDark ? (
+                <>
+                  <Sun className="w-4 h-4 text-amber-300 shrink-0" aria-hidden="true" />
+                  <span>Claro</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4 text-[#1D4ED8] shrink-0" aria-hidden="true" />
+                  <span>Escuro</span>
+                </>
+              )}
+            </button>
           </div>
 
           {geoNotice && (

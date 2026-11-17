@@ -78,15 +78,15 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
           type="button"
           onClick={toggleWelcome}
           aria-expanded={showWelcome}
-          className="w-full min-h-[48px] px-4 py-3 flex items-center justify-between gap-2 text-left hover:bg-[#F1F5F9]/60 dark:hover:bg-slate-700/50 transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
+          className="w-full min-h-[48px] px-4 py-3 flex items-center justify-between gap-3 text-left hover:bg-[#F1F5F9]/60 dark:hover:bg-slate-700/50 transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
         >
-          <span className="inline-flex items-center gap-2 min-w-0">
-            <Info className="w-5 h-5 text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
-            <span className="text-[16px] font-extrabold text-[#0F172A] dark:text-slate-50 truncate">
+          <span className="inline-flex items-start gap-2 min-w-0 flex-1">
+            <Info className="w-5 h-5 text-[#1D4ED8] dark:text-blue-300 shrink-0 mt-0.5" aria-hidden="true" />
+            <span className="text-[15.5px] min-[390px]:text-[16px] font-extrabold text-[#0F172A] dark:text-slate-50 leading-snug">
               Bem-vindo! Como ler este painel
             </span>
           </span>
-          <span className="inline-flex items-center gap-1 text-[13px] font-bold text-[#1D4ED8] dark:text-blue-300 shrink-0">
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#DBEAFE]/70 dark:bg-blue-950/70 text-[13px] font-bold text-[#1D4ED8] dark:text-blue-300 shrink-0">
             <span>{showWelcome ? 'Ocultar' : 'Abrir'}</span>
             {showWelcome ? (
               <ChevronUp className="w-4 h-4" aria-hidden="true" />
