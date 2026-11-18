@@ -5,12 +5,9 @@ import {
   ArrowDownWideNarrow,
   ArrowRight,
   ArrowUpRight,
-  ChevronDown,
   ChevronRight,
-  ChevronUp,
   CircleDollarSign,
   Clock,
-  Info,
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
@@ -30,34 +27,12 @@ interface TodayScreenProps {
   onSelectMaterial: (materialId: string) => void;
 }
 
-const WELCOME_STORAGE_KEY = 'balcao_inteligente_welcome_open_v1';
-
 type TodayFilter = TrafficLightStatus | 'ECONOMIA' | 'ALL';
 type StockSortMode = 'default' | 'valor' | 'dias';
 
 export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
   const [filterStatus, setFilterStatus] = useState<TodayFilter>('ALL');
   const [stockSortMode, setStockSortMode] = useState<StockSortMode>('default');
-  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem(WELCOME_STORAGE_KEY);
-      return saved === null ? true : saved === 'true';
-    } catch {
-      return true;
-    }
-  });
-
-  const toggleWelcome = () => {
-    setShowWelcome((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(WELCOME_STORAGE_KEY, String(next));
-      } catch {
-        // ignore storage errors
-      }
-      return next;
-    });
-  };
 
   const cycleStockSort = () => {
     setStockSortMode((prev) =>
@@ -104,73 +79,6 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
     <div className="space-y-5">
       {/* Alerta de Preços de Referência */}
       <ReferencePriceBanner items={items} onJumpToMaterial={onSelectMaterial} />
-
-      {/* Card de Boas-vindas */}
-      <section
-        aria-label="Guia rápido do balcão"
-        className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl overflow-hidden"
-      >
-        <button
-          type="button"
-          onClick={toggleWelcome}
-          aria-expanded={showWelcome}
-          className="w-full min-h-[48px] px-4 py-3 flex items-center justify-between gap-3 text-left hover:bg-[#F1F5F9]/60 dark:hover:bg-slate-700/50 transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
-        >
-          <span className="inline-flex items-start gap-2 min-w-0 flex-1">
-            <Info className="w-5 h-5 text-[#1D4ED8] dark:text-blue-300 shrink-0 mt-0.5" aria-hidden="true" />
-            <span className="text-[15.5px] min-[390px]:text-[16px] font-extrabold text-[#0F172A] dark:text-slate-50 leading-snug">
-              Bem-vindo! Como ler este painel
-            </span>
-          </span>
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#DBEAFE]/70 dark:bg-blue-950/70 text-[13px] font-bold text-[#1D4ED8] dark:text-blue-300 shrink-0">
-            <span>{showWelcome ? 'Ocultar' : 'Abrir'}</span>
-            {showWelcome ? (
-              <ChevronUp className="w-4 h-4" aria-hidden="true" />
-            ) : (
-              <ChevronDown className="w-4 h-4" aria-hidden="true" />
-            )}
-          </span>
-        </button>
-
-        {showWelcome && (
-          <div className="px-4 pb-4 pt-1 border-t border-[#E2E8F0] dark:border-slate-700 space-y-3 text-[15px] text-[#334155] dark:text-slate-300 leading-snug">
-            <p className="font-medium text-[#0F172A] dark:text-slate-100">
-              Acompanhe o Termômetro de Mercado para apoiar sua decisão no depósito:
-            </p>
-
-            <ul className="space-y-2 text-[14px]">
-              <li className="flex items-start gap-2">
-                <span className="w-3 h-3 rounded-sm bg-[#B91C1C] dark:bg-red-400 shrink-0 mt-1.5" aria-hidden="true" />
-                <span>
-                  <strong className="text-[#B91C1C] dark:text-red-300">Atenção ao Estoque:</strong> Pátio baixo. Avalie repor logo para não faltar ao cliente.
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-3 h-3 rounded-sm bg-[#B45309] dark:bg-amber-400 shrink-0 mt-1.5" aria-hidden="true" />
-                <span>
-                  <strong className="text-[#B45309] dark:text-amber-300">Sinal de Alta:</strong> Estoque em dia, mas os dados apontam subida nos próximos 30 dias.
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-3 h-3 rounded-sm bg-[#15803D] dark:bg-emerald-400 shrink-0 mt-1.5" aria-hidden="true" />
-                <span>
-                  <strong className="text-[#15803D] dark:text-emerald-300">Sinal de Queda:</strong> Estoque confortável e preços dando sinal de baixa.
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-3 h-3 rounded-sm bg-[#1D4ED8] dark:bg-blue-400 shrink-0 mt-1.5" aria-hidden="true" />
-                <span>
-                  <strong className="text-[#1D4ED8] dark:text-blue-300">Mercado Estável:</strong> Pátio abastecido e preços sem grandes mudanças recentes.
-                </span>
-              </li>
-            </ul>
-
-            <p className="text-[12.5px] italic text-[#334155] dark:text-slate-300 pt-2 border-t border-[#E2E8F0] dark:border-slate-700 leading-snug">
-              *Indicador estatístico de apoio. Não representa garantia de preço futuro ou recomendação financeira.
-            </p>
-          </div>
-        )}
-      </section>
 
       {/* Resumo do Semáforo (3 cards grandes lado a lado) */}
       <section aria-label="Resumo do semáforo de compras">
@@ -442,12 +350,12 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                   />
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="mt-3 flex items-center justify-between gap-2">
                   <StatusChip status={item.status} />
 
-                  <div className="text-right">
+                  <div className="min-w-0 text-right leading-tight">
                     <div
-                      className={`text-[14px] font-bold font-num ${
+                      className={`text-[12px] min-[400px]:text-[12.5px] font-bold font-num ${
                         stockSortMode === 'dias'
                           ? 'text-[#1D4ED8] dark:text-blue-300'
                           : 'text-[#0F172A] dark:text-slate-50'
@@ -459,12 +367,12 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                     </div>
                     <div
                       title="Tendência prevista de preço em 45 dias"
-                      className={`inline-flex items-center justify-end gap-1 text-[14px] font-bold font-num ${priceTrendTextColor}`}
+                      className={`mt-0.5 inline-flex items-center justify-end gap-1 text-[12px] min-[400px]:text-[12.5px] font-bold font-num ${priceTrendTextColor}`}
                     >
-                      <CircleDollarSign className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      {isUp && <ArrowUpRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
-                      {isDown && <ArrowDownRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
-                      {!isUp && !isDown && <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />}
+                      <CircleDollarSign className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                      {isUp && <ArrowUpRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+                      {isDown && <ArrowDownRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+                      {!isUp && !isDown && <ArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
                       <span>
                         {isUp || isDown
                           ? `${formatPercentSigned(item.var45d)} em 45d`

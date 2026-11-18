@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  ArrowLeft,
   Calculator,
   Check,
   Copy,
@@ -30,7 +29,6 @@ interface MaterialDetailScreenProps {
   newsItems?: MarketNewsItem[];
   onSelectMaterial: (id: string) => void;
   onUpdateConfig: (materialId: string, patch: Partial<StoreInventoryConfig>) => void;
-  onBackToToday: () => void;
   onOpenSimulator: (materialId: string) => void;
   isDark?: boolean;
 }
@@ -41,7 +39,6 @@ export function MaterialDetailScreen({
   newsItems,
   onSelectMaterial,
   onUpdateConfig,
-  onBackToToday,
   onOpenSimulator,
   isDark = false,
 }: MaterialDetailScreenProps) {
@@ -131,22 +128,13 @@ export function MaterialDetailScreen({
         onJumpToMaterial={onSelectMaterial}
       />
 
-      {/* Top navigation & quick material switcher */}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onBackToToday}
-          className="inline-flex items-center gap-1.5 min-h-[48px] px-3 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 text-[15px] font-bold text-[#0F172A] dark:text-slate-50 shrink-0 active:scale-[0.98]"
-        >
-          <ArrowLeft className="w-5 h-5" aria-hidden="true" />
-          <span>Voltar</span>
-        </button>
-
+      {/* Quick material switcher */}
+      <div>
         <select
           aria-label="Trocar material"
           value={record.id}
           onChange={(e) => onSelectMaterial(e.target.value)}
-          className="flex-1 min-w-0 min-h-[48px] px-3 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 text-[15px] font-bold text-[#0F172A] dark:text-slate-50 truncate"
+          className="w-full min-w-0 min-h-[48px] px-3 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 text-[15px] font-bold text-[#0F172A] dark:text-slate-50 truncate"
         >
           {allMaterials.map((item) => (
             <option key={item.record.id} value={item.record.id}>

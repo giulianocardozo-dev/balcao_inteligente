@@ -622,7 +622,6 @@ export default function App() {
               newsItems={newsItems}
               onSelectMaterial={(id) => setSelectedMaterialId(id)}
               onUpdateConfig={handleUpdateConfig}
-              onBackToToday={() => switchTab('hoje')}
               onOpenSimulator={openSimulator}
               isDark={isDark}
             />

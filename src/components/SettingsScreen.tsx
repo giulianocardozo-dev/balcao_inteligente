@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, Crown, Mail, Settings, Store, User } from 'lucide-react';
+import { Check, Crown, Info, Mail, Settings, Store, User } from 'lucide-react';
 import { SubscriptionPlanId, UserProfile } from '../types/inventory';
 import { formatSyncTimestamp } from '../utils/forecastSync';
 
@@ -283,6 +283,58 @@ export function SettingsScreen({
         <div className="text-[12px] font-medium text-[#475569] dark:text-slate-400">
           Seleção atual: <strong className="text-[#0F172A] dark:text-slate-200">{selectedPlanObj.name}</strong> ({selectedPlanObj.badge})
         </div>
+      </section>
+
+      {/* Seção 3: Orientação de uso */}
+      <section
+        aria-label="Orientação: como ler o painel"
+        className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl p-4 space-y-3.5"
+      >
+        <div className="flex items-start gap-2">
+          <Info
+            className="w-5 h-5 text-[#1D4ED8] dark:text-blue-300 shrink-0 mt-0.5"
+            aria-hidden="true"
+          />
+          <div>
+            <h3 className="text-[16px] font-extrabold text-[#0F172A] dark:text-slate-50">
+              Orientação: como ler o painel
+            </h3>
+            <p className="text-[13px] font-medium text-[#475569] dark:text-slate-300 mt-0.5 leading-snug">
+              Acompanhe o Termômetro de Mercado para apoiar sua decisão de compra no depósito:
+            </p>
+          </div>
+        </div>
+
+        <ul className="space-y-2.5 text-[14px] text-[#334155] dark:text-slate-300 leading-snug">
+          <li className="flex items-start gap-2">
+            <span className="w-3 h-3 rounded-sm bg-[#B91C1C] dark:bg-red-400 shrink-0 mt-1.5" aria-hidden="true" />
+            <span>
+              <strong className="text-[#B91C1C] dark:text-red-300">Atenção ao Estoque:</strong> Estoque baixo no pátio ou na prateleira. Avalie repor logo para não faltar ao cliente.
+            </span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="w-3 h-3 rounded-sm bg-[#B45309] dark:bg-amber-400 shrink-0 mt-1.5" aria-hidden="true" />
+            <span>
+              <strong className="text-[#B45309] dark:text-amber-300">Sinal de Alta:</strong> Estoque em dia, mas os dados apontam subida nos próximos 30 dias.
+            </span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="w-3 h-3 rounded-sm bg-[#15803D] dark:bg-emerald-400 shrink-0 mt-1.5" aria-hidden="true" />
+            <span>
+              <strong className="text-[#15803D] dark:text-emerald-300">Sinal de Queda:</strong> Estoque confortável e preços dando sinal de baixa.
+            </span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="w-3 h-3 rounded-sm bg-[#1D4ED8] dark:bg-blue-400 shrink-0 mt-1.5" aria-hidden="true" />
+            <span>
+              <strong className="text-[#1D4ED8] dark:text-blue-300">Mercado Estável:</strong> Estoque abastecido no pátio ou na prateleira e preços sem grandes mudanças recentes.
+            </span>
+          </li>
+        </ul>
+
+        <p className="text-[12.5px] italic text-[#475569] dark:text-slate-300 pt-2.5 border-t border-[#E2E8F0] dark:border-slate-700 leading-snug">
+          *Indicador estatístico de apoio. Não representa garantia de preço futuro ou recomendação financeira.
+        </p>
       </section>
     </div>
   );
