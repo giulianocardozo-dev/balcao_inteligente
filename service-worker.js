@@ -1,5 +1,5 @@
-const CACHE\_NAME = 'balcao-inteligente-v1';
-const ASSETS\_TO\_CACHE = [
+const CACHE_NAME = 'balcao-inteligente-v1';
+const ASSETS_TO_CACHE = [
  '/', '/index.html',
  '/manifest.json',
  '/icon-192.png',
