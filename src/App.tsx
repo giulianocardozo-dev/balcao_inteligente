@@ -23,6 +23,7 @@ import {
   AppTab,
   EvaluatedMaterial,
   ForecastSyncState,
+  MarketNewsItem,
   SinapiMaterialRecord,
   StoreInventoryConfig,
   UserProfile,
@@ -34,6 +35,13 @@ import {
   fetchGitHubForecast,
   readCachedForecast,
 } from './utils/forecastSync';
+import {
+  NEWS_SYNC_INTERVAL_MS,
+  fetchSmartWebNews,
+  getInitialNewsItems,
+  readCachedNews,
+  shouldRefreshNews,
+} from './utils/newsSync';
 import { detectUfFromCoordinates } from './utils/ufGeolocation';
 
 const STORAGE_KEYS = {
@@ -120,6 +128,13 @@ export default function App() {
       }
     })()
   );
+
+  const initialCachedNews = useMemo(() => readCachedNews(), []);
+  const [newsItems, setNewsItems] = useState<MarketNewsItem[]>(() => getInitialNewsItems());
+  const [newsError, setNewsError] = useState<string | null>(null);
+  const newsUpdatedAtRef = useRef<string | null>(initialCachedNews?.updatedAtIso ?? null);
+  const newsSyncInFlightRef = useRef(false);
+  const lastNewsAttemptMsRef = useRef(0);
 
   const syncInFlightRef = useRef(false);
   const lastSyncCheckMsRef = useRef(0);
@@ -322,6 +337,64 @@ export default function App() {
       window.removeEventListener('online', handleOnline);
     };
   }, [runForecastSync]);
+
+  const runNewsSync = useCallback(async () => {
+    if (newsSyncInFlightRef.current) return;
+    const nowMs = Date.now();
+
+    if (!shouldRefreshNews(newsUpdatedAtRef.current, nowMs)) {
+      return;
+    }
+    if (nowMs - lastNewsAttemptMsRef.current < 5 * 60 * 1000) {
+      return;
+    }
+
+    newsSyncInFlightRef.current = true;
+    lastNewsAttemptMsRef.current = nowMs;
+
+    try {
+      const result = await fetchSmartWebNews();
+      if (result.ok) {
+        setNewsItems(result.items);
+        newsUpdatedAtRef.current = result.updatedAtIso;
+        setNewsError(null);
+      } else if (!result.aborted) {
+        setNewsError(result.error);
+      }
+    } finally {
+      newsSyncInFlightRef.current = false;
+    }
+  }, []);
+
+  // Busca inteligente de notícias na web em segundo plano a cada 4 horas (sem travar navegação)
+  useEffect(() => {
+    void runNewsSync();
+
+    const intervalId = window.setInterval(() => {
+      void runNewsSync();
+    }, NEWS_SYNC_INTERVAL_MS);
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        void runNewsSync();
+      }
+    };
+
+    const handleOnline = () => {
+      void runNewsSync();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [runNewsSync]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -548,6 +621,7 @@ export default function App() {
             <MaterialDetailScreen
               material={activeMaterial}
               allMaterials={evaluatedItems}
+              newsItems={newsItems}
               onSelectMaterial={(id) => setSelectedMaterialId(id)}
               onUpdateConfig={handleUpdateConfig}
               onBackToToday={() => switchTab('hoje')}
@@ -565,7 +639,11 @@ export default function App() {
           )}
 
           {activeTab === 'noticias' && (
-            <MarketNewsScreen onOpenCalculator={openSimulator} />
+            <MarketNewsScreen
+              items={newsItems}
+              onOpenCalculator={openSimulator}
+              syncError={newsError}
+            />
           )}
 
           {activeTab === 'config' && (

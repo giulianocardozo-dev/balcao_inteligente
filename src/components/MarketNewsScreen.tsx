@@ -5,14 +5,20 @@ import {
   NEWS_FILTER_CHIPS,
   NEWS_TIME_RANGES,
 } from '../data/marketNews';
-import { NewsCategory, NewsTimeRange } from '../types/inventory';
+import { MarketNewsItem, NewsCategory, NewsTimeRange } from '../types/inventory';
 import { NewsCard } from './NewsCard';
 
 interface MarketNewsScreenProps {
+  items: MarketNewsItem[];
   onOpenCalculator: (materialId: string) => void;
+  syncError?: string | null;
 }
 
-export function MarketNewsScreen({ onOpenCalculator }: MarketNewsScreenProps) {
+export function MarketNewsScreen({
+  items,
+  onOpenCalculator,
+  syncError = null,
+}: MarketNewsScreenProps) {
   const [selectedCategory, setSelectedCategory] = useState<NewsCategory>('todos');
   const [selectedTimeRange, setSelectedTimeRange] = useState<NewsTimeRange>('mes');
   const [isTimeMenuOpen, setIsTimeMenuOpen] = useState(false);
@@ -20,22 +26,29 @@ export function MarketNewsScreen({ onOpenCalculator }: MarketNewsScreenProps) {
   const activeTimeOption =
     NEWS_TIME_RANGES.find((opt) => opt.id === selectedTimeRange) ?? NEWS_TIME_RANGES[2];
 
-  const visibleNews = getUpdatedMarketNews(selectedTimeRange, selectedCategory);
+  const visibleNews = getUpdatedMarketNews(selectedTimeRange, selectedCategory, items);
 
   return (
     <div className="space-y-4">
       {/* Cabeçalho da Tela */}
-      <div>
-        <div className="flex items-center gap-2">
-          <Newspaper
-            className="w-5 h-5 text-[#1D4ED8] dark:text-blue-300 shrink-0"
-            aria-hidden="true"
-          />
-          <h2 className="text-[20px] font-extrabold text-[#0F172A] dark:text-slate-50">
-            Notícias &amp; Mercado
-          </h2>
-        </div>
+      <div className="flex items-center gap-2">
+        <Newspaper
+          className="w-5 h-5 text-[#1D4ED8] dark:text-blue-300 shrink-0"
+          aria-hidden="true"
+        />
+        <h2 className="text-[20px] font-extrabold text-[#0F172A] dark:text-slate-50">
+          Notícias &amp; Mercado
+        </h2>
       </div>
+
+      {syncError && (
+        <div
+          role="status"
+          className="px-3.5 py-2.5 rounded-xl bg-[#FEF3C7] dark:bg-amber-950/80 border border-[#FCD34D] dark:border-amber-700 text-[#92400E] dark:text-amber-200 text-[13px] font-semibold leading-snug"
+        >
+          {syncError}
+        </div>
+      )}
 
       {/* Botão para filtrar por período atualizado (24h, semana, mês) */}
       <div className="space-y-2">
@@ -75,7 +88,7 @@ export function MarketNewsScreen({ onOpenCalculator }: MarketNewsScreenProps) {
           >
             {NEWS_TIME_RANGES.map((option) => {
               const isSelected = selectedTimeRange === option.id;
-              const optionCount = getUpdatedMarketNews(option.id, selectedCategory).length;
+              const optionCount = getUpdatedMarketNews(option.id, selectedCategory, items).length;
               return (
                 <button
                   key={option.id}

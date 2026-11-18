@@ -2,5 +2,5 @@
   "name": "Balcão Inteligente",
   "description": "Decisão rápida de compras e reposição de estoque para lojas de materiais de construção, com previsão de preços via Excel.",
   "requestFramePermissions": ["geolocation"],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

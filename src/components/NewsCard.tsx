@@ -7,6 +7,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
+import { formatNewsDateLabel } from '../data/marketNews';
 import { MarketNewsItem, NewsSignal } from '../types/inventory';
 
 interface NewsCardProps {
@@ -66,6 +67,7 @@ function SignalIcon({ signal }: { signal: NewsSignal }) {
 export function NewsCard({ item, onOpenCalculator, compact = false }: NewsCardProps) {
   const signalStyle = SIGNAL_STYLES[item.sinal];
   const isYellowHighlight = item.destaqueCor === 'amarelo';
+  const dateLabel = formatNewsDateLabel(item.publishedAt);
 
   return (
     <article
@@ -89,7 +91,7 @@ export function NewsCard({ item, onOpenCalculator, compact = false }: NewsCardPr
           <ExternalLink className="w-3 h-3 shrink-0" aria-hidden="true" />
         </a>
         <span aria-hidden="true">•</span>
-        <span>{item.dataLabel}</span>
+        <span>{dateLabel}</span>
       </div>
 
       {/* Badge de Sinal */}

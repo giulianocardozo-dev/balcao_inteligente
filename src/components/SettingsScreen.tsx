@@ -111,9 +111,6 @@ export function SettingsScreen({
           <h3 className="text-[16px] font-extrabold text-[#0F172A] dark:text-slate-50">
             Perfil da loja
           </h3>
-          <p className="text-[13px] font-medium text-[#475569] dark:text-slate-300 mt-0.5">
-            O nome da loja aparece automaticamente no topo do aplicativo.
-          </p>
         </div>
 
         <form onSubmit={handleSaveProfile} className="space-y-3.5">

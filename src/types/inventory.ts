@@ -41,25 +41,16 @@ export type NewsSignal = 'ALTA' | 'QUEDA' | 'ATENCAO' | 'ESTAVEL';
 
 export type NewsTimeRange = '24h' | 'semana' | 'mes';
 
-export type ApprovedNewsSource =
-  | 'Valor Econômico'
-  | 'InfoMoney'
-  | 'Exame'
-  | 'Money Times'
-  | 'g1 Economia'
-  | 'CNN Brasil'
-  | 'Agência Brasil';
-
 export interface MarketNewsItem {
   id: string;
   materialId: string;
   materialNome: string;
   ncm: string;
   categoria: Exclude<NewsCategory, 'todos'>;
-  fonte: ApprovedNewsSource;
+  fonte: string;
   articleUrl: string;
   publishedAt: string; // ISO 8601 UTC/offset timestamp
-  dataLabel: string;
+  dataLabel?: string;
   ordemRecencia: number; // smaller = more recent
   sinal: NewsSignal;
   sinalLabel: string;

@@ -9,7 +9,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { getNewsForMaterial } from '../data/marketNews';
-import { EvaluatedMaterial, StoreInventoryConfig } from '../types/inventory';
+import { EvaluatedMaterial, MarketNewsItem, StoreInventoryConfig } from '../types/inventory';
 import {
   formatBRL,
   formatDays,
@@ -24,6 +24,7 @@ import { STATUS_META, StatusIcon } from './StatusVisuals';
 interface MaterialDetailScreenProps {
   material: EvaluatedMaterial;
   allMaterials: EvaluatedMaterial[];
+  newsItems?: MarketNewsItem[];
   onSelectMaterial: (id: string) => void;
   onUpdateConfig: (materialId: string, patch: Partial<StoreInventoryConfig>) => void;
   onBackToToday: () => void;
@@ -34,6 +35,7 @@ interface MaterialDetailScreenProps {
 export function MaterialDetailScreen({
   material,
   allMaterials,
+  newsItems,
   onSelectMaterial,
   onUpdateConfig,
   onBackToToday,
@@ -44,7 +46,7 @@ export function MaterialDetailScreen({
 
   const { record, config } = material;
   const meta = STATUS_META[material.status];
-  const relatedNews = getNewsForMaterial(record.id, record.insumo, 2);
+  const relatedNews = getNewsForMaterial(record.id, record.insumo, 2, newsItems);
 
   const orderQty =
     material.quantidadeSugerida > 0

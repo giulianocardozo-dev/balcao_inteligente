@@ -12,8 +12,6 @@ export interface NewsTimeRangeOption {
   maxHours: number;
 }
 
-export const NEWS_SNAPSHOT_TIME = '2026-11-17T15:00:00Z';
-
 export const NEWS_TIME_RANGES: NewsTimeRangeOption[] = [
   { id: '24h', label: 'Nas últimas 24 h', shortLabel: 'Últimas 24 h', maxHours: 24 },
   { id: 'semana', label: 'Na última semana', shortLabel: 'Última semana', maxHours: 24 * 7 },
@@ -367,10 +365,53 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
   },
 ];
 
+const SAO_PAULO_TZ = 'America/Sao_Paulo';
+
+function getSaoPauloDateParts(date: Date): { year: number; month: number; day: number } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: SAO_PAULO_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+
+  const lookup = Object.fromEntries(parts.map((p) => [p.type, Number(p.value)]));
+  return {
+    year: lookup.year,
+    month: lookup.month,
+    day: lookup.day,
+  };
+}
+
+export function formatNewsDateLabel(publishedAt: string, now: Date = new Date()): string {
+  const pubDate = new Date(publishedAt);
+  if (Number.isNaN(pubDate.getTime())) {
+    return '--/--';
+  }
+
+  const pubParts = getSaoPauloDateParts(pubDate);
+  const nowParts = getSaoPauloDateParts(now);
+
+  const pubUtcDay = Date.UTC(pubParts.year, pubParts.month - 1, pubParts.day);
+  const nowUtcDay = Date.UTC(nowParts.year, nowParts.month - 1, nowParts.day);
+  const diffDays = Math.round((nowUtcDay - pubUtcDay) / (24 * 60 * 60 * 1000));
+
+  const dd = String(pubParts.day).padStart(2, '0');
+  const mm = String(pubParts.month).padStart(2, '0');
+
+  if (diffDays === 0) {
+    return `Hoje · ${dd}/${mm}`;
+  }
+  if (diffDays === 1) {
+    return `Ontem · ${dd}/${mm}`;
+  }
+  return `${dd}/${mm}/${pubParts.year}`;
+}
+
 export function isWithinNewsTimeRange(
   publishedAt: string,
   range: NewsTimeRange,
-  referenceNowIso = NEWS_SNAPSHOT_TIME
+  referenceNowIso: string = new Date().toISOString()
 ): boolean {
   const pubMs = Date.parse(publishedAt);
   const refMs = Date.parse(referenceNowIso);
@@ -379,19 +420,29 @@ export function isWithinNewsTimeRange(
   const option = NEWS_TIME_RANGES.find((r) => r.id === range);
   const maxMs = (option ? option.maxHours : 24 * 30) * 60 * 60 * 1000;
   const ageMs = refMs - pubMs;
-  return ageMs >= 0 && ageMs <= maxMs;
+  return ageMs >= -5 * 60 * 1000 && ageMs <= maxMs;
 }
 
 export function getUpdatedMarketNews(
   timeRange: NewsTimeRange = 'mes',
-  category: NewsCategory = 'todos'
+  category: NewsCategory = 'todos',
+  sourceItems: MarketNewsItem[] = MARKET_NEWS_ITEMS,
+  referenceNowIso: string = new Date().toISOString()
 ): MarketNewsItem[] {
-  return MARKET_NEWS_ITEMS.filter(
-    (item) =>
-      isWithinNewsTimeRange(item.publishedAt, 'mes') &&
-      isWithinNewsTimeRange(item.publishedAt, timeRange) &&
-      (category === 'todos' || item.categoria === category)
-  ).sort((a, b) => a.ordemRecencia - b.ordemRecencia);
+  const now = new Date(referenceNowIso);
+  return sourceItems
+    .filter(
+      (item) =>
+        isWithinNewsTimeRange(item.publishedAt, 'mes', referenceNowIso) &&
+        isWithinNewsTimeRange(item.publishedAt, timeRange, referenceNowIso) &&
+        (category === 'todos' || item.categoria === category)
+    )
+    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt) || a.ordemRecencia - b.ordemRecencia)
+    .map((item, index) => ({
+      ...item,
+      ordemRecencia: index + 1,
+      dataLabel: formatNewsDateLabel(item.publishedAt, now),
+    }));
 }
 
 export function resolveMaterialNcm(materialId: string, insumoName?: string): string | null {
@@ -415,12 +466,13 @@ export function resolveMaterialNcm(materialId: string, insumoName?: string): str
 export function getNewsForMaterial(
   materialId: string,
   insumoName?: string,
-  limit = 2
+  limit = 2,
+  sourceItems: MarketNewsItem[] = MARKET_NEWS_ITEMS
 ): MarketNewsItem[] {
   const ncm = resolveMaterialNcm(materialId, insumoName);
   if (!ncm) return [];
 
-  return getUpdatedMarketNews('mes', 'todos')
+  return getUpdatedMarketNews('mes', 'todos', sourceItems)
     .filter((item) => item.ncm === ncm || item.materialId === materialId)
     .slice(0, limit);
 }
