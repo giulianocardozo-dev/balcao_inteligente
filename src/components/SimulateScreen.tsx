@@ -119,13 +119,6 @@ export function SimulateScreen({
         <h2 className="text-[20px] font-extrabold text-[#0F172A] dark:text-slate-50">
           Calculadora de Balcão
         </h2>
-        <p className="text-[14px] font-medium text-[#334155] dark:text-slate-300">
-          Antes de fechar com o vendedor, simule a situação do{' '}
-          <strong className="font-extrabold text-[#0F172A] dark:text-slate-100">
-            {mode === 'quando_pedir' ? 'estoque' : 'preço'}
-          </strong>
-          .
-        </p>
       </div>
 
       {/* 2 Abas no topo */}
@@ -349,7 +342,7 @@ export function SimulateScreen({
                 htmlFor="sim-quantidade"
                 className="block text-[14px] font-bold text-[#334155] dark:text-slate-200 mb-1.5"
               >
-                Quantidade que quer comprar ({formatUnit(record.unidadeComercial)})
+                Quantidade do pedido ({formatUnit(record.unidadeComercial)})
               </label>
               <div className="flex items-center gap-2">
                 <button
@@ -386,7 +379,7 @@ export function SimulateScreen({
                 htmlFor="sim-preco-cotado"
                 className="block text-[14px] font-bold text-[#334155] dark:text-slate-200 mb-1.5"
               >
-                Preço cotado hoje pelo vendedor (R$)
+                Preço cotado hoje (R$)
               </label>
               <div className="flex items-center gap-2">
                 <button
@@ -522,9 +515,6 @@ export function SimulateScreen({
                 </div>
                 <div className="text-[20px] font-extrabold text-[#0F172A] dark:text-slate-50">
                   {formatBRL(sim2.precoAlvoMaximo)}
-                </div>
-                <div className="text-[12px] font-medium text-[#334155] dark:text-slate-300">
-                  Acima disso, espere se tiver estoque
                 </div>
               </div>
               <div>

@@ -110,7 +110,6 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
           >
             <div className="flex items-center justify-between gap-1">
               <AlertTriangle className="w-5 h-5 text-[#B91C1C] dark:text-red-200 shrink-0" aria-hidden="true" />
-              <span className="text-[11px] font-bold text-[#B91C1C] dark:text-red-200">VERMELHO</span>
             </div>
             <div className="mt-1">
               <div className="text-[30px] leading-none font-extrabold text-[#B91C1C] dark:text-red-100 font-num">
@@ -134,7 +133,6 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
           >
             <div className="flex items-center justify-between gap-1">
               <TrendingUp className="w-5 h-5 text-[#B45309] dark:text-amber-200 shrink-0" aria-hidden="true" />
-              <span className="text-[11px] font-bold text-[#B45309] dark:text-amber-200">AMARELO</span>
             </div>
             <div className="mt-1">
               <div className="text-[30px] leading-none font-extrabold text-[#B45309] dark:text-amber-100 font-num">
@@ -158,7 +156,6 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
           >
             <div className="flex items-center justify-between gap-1">
               <TrendingDown className="w-5 h-5 text-[#15803D] dark:text-emerald-200 shrink-0" aria-hidden="true" />
-              <span className="text-[11px] font-bold text-[#15803D] dark:text-emerald-200">VERDE</span>
             </div>
             <div className="mt-1">
               <div className="text-[30px] leading-none font-extrabold text-[#15803D] dark:text-emerald-100 font-num">
@@ -279,15 +276,11 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
           <h2 className="text-[18px] font-extrabold text-[#0F172A] dark:text-slate-50">
             Lista de materiais ({visibleItems.length})
           </h2>
-          {stockSortMode !== 'default' ? (
+          {stockSortMode !== 'default' && (
             <span className="text-[13px] font-bold text-[#1D4ED8] dark:text-blue-300">
               {stockSortMode === 'valor'
                 ? 'Maior → menor valor'
                 : 'Maior → menor dias'}
-            </span>
-          ) : (
-            <span className="text-[13px] font-medium text-[#334155] dark:text-slate-300">
-              Toque para abrir
             </span>
           )}
         </div>

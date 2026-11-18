@@ -3,11 +3,12 @@ import {
   Calculator,
   Check,
   Copy,
+  ExternalLink,
   Minus,
   Newspaper,
   Plus,
 } from 'lucide-react';
-import { getNewsForMaterial } from '../data/marketNews';
+import { formatNewsDateLabel, getNewsForMaterial } from '../data/marketNews';
 import { EvaluatedMaterial, MarketNewsItem, StoreInventoryConfig } from '../types/inventory';
 import {
   formatBRL,
@@ -18,7 +19,6 @@ import {
   getMaterialStorageLocation,
   getStoragePreposition,
 } from '../utils/mathEngine';
-import { NewsCard } from './NewsCard';
 import { PriceHistoryChart } from './PriceHistoryChart';
 import { ReferencePriceBanner } from './ReferencePriceBanner';
 import { getStatusDescription, STATUS_META, StatusIcon } from './StatusVisuals';
@@ -100,17 +100,6 @@ export function MaterialDetailScreen({
 
   const custoTotalEstoque = config.estoqueAtual * config.custoMedio;
   const hasRefPrice = config.custoMedio > 0;
-
-  const costStatusText = !hasRefPrice
-    ? 'Informe o preço de referência acima para calcular o total em estoque e a economia estimada.'
-    : `Preço de referência salvo: ${formatBRL(config.custoMedio)} por ${record.unidadeComercial}. Total em estoque: ${formatBRL(custoTotalEstoque)}.`;
-
-  const trendLabel =
-    material.tendencia === 'alta'
-      ? 'Tendência de Alta'
-      : material.tendencia === 'queda'
-      ? 'Tendência de Queda'
-      : 'Tendência Estável';
 
   const trendTextColor =
     material.tendencia === 'alta'
@@ -236,6 +225,24 @@ export function MaterialDetailScreen({
                 : 'Preço estável no período'}
             </div>
           </div>
+        </div>
+
+        <div className="mt-3 pt-2.5 border-t border-black/10 dark:border-white/15 text-[12.5px] font-bold text-[#334155] dark:text-slate-200 font-num leading-snug">
+          Pedir de novo com{' '}
+          <span className="font-extrabold text-[#0F172A] dark:text-slate-50">
+            {formatQty(material.quandoPedirDeNovo)}{' '}
+            {formatUnit(record.unidadeComercial, material.quandoPedirDeNovo)}
+          </span>
+          <span className="mx-1.5 opacity-60" aria-hidden="true">·</span>
+          Duração:{' '}
+          <span className="font-extrabold text-[#0F172A] dark:text-slate-50">
+            {material.diasQueDura >= 999 ? 'sem giro recente' : `~${formatDays(material.diasQueDura)}`}
+          </span>
+          <span className="mx-1.5 opacity-60" aria-hidden="true">·</span>
+          Em 3 meses:{' '}
+          <span className="font-extrabold text-[#0F172A] dark:text-slate-50">
+            {formatPercentSigned(material.var90d)}
+          </span>
         </div>
       </section>
 
@@ -382,111 +389,19 @@ export function MaterialDetailScreen({
             />
             <p
               id="edit-custo-medio-help"
-              className={`text-[12px] mt-1.5 leading-snug ${
+              className={`text-[12px] mt-1 leading-snug ${
                 hasRefPrice
                   ? 'font-medium text-[#334155] dark:text-slate-300'
                   : 'font-bold text-[#B45309] dark:text-amber-300'
               }`}
             >
-              {hasRefPrice
-                ? 'Salvo automaticamente. Base para calcular variação e estoque.'
-                : 'Obrigatório: informe seu preço de referência atual por unidade.'}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 3 Cartões Empilhados (Por que fazer isso?) */}
-      <section className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl p-4 space-y-3">
-        <h3 className="text-[17px] font-extrabold text-[#0F172A] dark:text-slate-50">
-          Por que fazer isso?
-        </h3>
-
-        <div className="space-y-2.5">
-          {/* Card 1 — Seu Estoque (Simulação) */}
-          <div className="rounded-xl bg-white dark:bg-slate-900/90 border border-[#CBD5E1] dark:border-slate-700 p-3.5 space-y-1.5">
-            <div className="text-[13px] font-extrabold uppercase tracking-wide text-[#334155] dark:text-slate-300">
-              Seu Estoque (Simulação)
-            </div>
-            <div className="text-[14px] font-medium text-[#334155] dark:text-slate-300 leading-snug">
-              Pedir de novo com:{' '}
-              <strong className="block sm:inline text-[20px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num">
-                {formatQty(material.quandoPedirDeNovo)}{' '}
-                {formatUnit(record.unidadeComercial, material.quandoPedirDeNovo)}
-              </strong>
-            </div>
-            <div className="text-[14px] font-semibold text-[#334155] dark:text-slate-300 font-num">
-              Duração:{' '}
-              <span className="font-bold text-[#0F172A] dark:text-slate-100">
-                {material.diasQueDura >= 999
-                  ? 'sem giro recente'
-                  : `~${formatDays(material.diasQueDura)}`}
-              </span>{' '}
-              <span className="mx-1 text-[#94A3B8] dark:text-slate-500" aria-hidden="true">
-                |
-              </span>{' '}
-              Entrega:{' '}
-              <span className="font-bold text-[#0F172A] dark:text-slate-100">
-                ~{formatDays(config.diasEntrega)}
-              </span>
-            </div>
-          </div>
-
-          {/* Card 2 — Termômetro de Mercado (Tendência) */}
-          <div className="rounded-xl bg-white dark:bg-slate-900/90 border border-[#CBD5E1] dark:border-slate-700 p-3.5 space-y-1.5">
-            <div className="text-[13px] font-extrabold uppercase tracking-wide text-[#334155] dark:text-slate-300">
-              Termômetro de Mercado (Tendência)
-            </div>
-            <div className="space-y-1 text-[14px] text-[#334155] dark:text-slate-300 font-num">
-              <div>
-                Preço de referência:{' '}
-                <strong
-                  className={`font-extrabold ${
-                    hasRefPrice
-                      ? 'text-[#0F172A] dark:text-slate-50'
-                      : 'text-[#B45309] dark:text-amber-300'
-                  }`}
-                >
-                  {hasRefPrice ? formatBRL(config.custoMedio) : 'Não informado (R$ 0,00)'}
-                </strong>
-              </div>
-              <div>
-                Projeção em 45 dias:{' '}
-                <strong className={`font-extrabold ${trendTextColor}`}>
-                  {formatPercentSigned(material.var45d)}
-                </strong>{' '}
-                <span className={`font-bold ${trendTextColor}`}>
-                  ({trendLabel})
-                </span>
-              </div>
-              <div>
-                Projeção em 3 meses:{' '}
-                <strong className="font-extrabold text-[#0F172A] dark:text-slate-50">
-                  {formatPercentSigned(material.var90d)}
-                </strong>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 3 — Referência da Loja */}
-          <div className="rounded-xl bg-white dark:bg-slate-900/90 border border-[#CBD5E1] dark:border-slate-700 p-3.5 space-y-1">
-            <div className="text-[13px] font-extrabold uppercase tracking-wide text-[#334155] dark:text-slate-300">
-              Referência da Loja
-            </div>
-            <p className="text-[14px] font-medium text-[#0F172A] dark:text-slate-100 leading-snug font-num">
-              {costStatusText}
-            </p>
-            <p className="text-[13px] font-medium text-[#475569] dark:text-slate-300 leading-snug">
-              Fique tranquilo: apenas você tem acesso a este preço.
+              {hasRefPrice ? 'Salvo automaticamente.' : 'Obrigatório informar.'}
             </p>
           </div>
         </div>
 
-        {/* Rodapé do Card (Disclaimer) */}
-        <p className="text-[12.5px] italic text-[#475569] dark:text-slate-300 pt-1 leading-snug">
-          Estimativa baseada em índices públicos.
-          <br />
-          Não garante preço futuro.
+        <p className="text-[12.5px] font-medium text-[#475569] dark:text-slate-300 leading-snug">
+          Fique tranquilo: apenas você tem acesso a este preço.
         </p>
       </section>
 
@@ -547,14 +462,29 @@ export function MaterialDetailScreen({
             </h3>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {relatedNews.map((newsItem) => (
-              <NewsCard
+              <a
                 key={newsItem.id}
-                item={newsItem}
-                compact
-                onOpenCalculator={() => onOpenSimulator(record.id)}
-              />
+                href={newsItem.articleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-2xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 hover:border-[#1D4ED8] dark:hover:border-blue-400 p-3.5 space-y-1.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
+              >
+                <div className="flex items-center justify-between gap-2 text-[12px] font-bold text-[#475569] dark:text-slate-300">
+                  <span className="inline-flex items-center gap-1 text-[#1D4ED8] dark:text-blue-300">
+                    <span>{newsItem.fonte}</span>
+                    <ExternalLink className="w-3 h-3 shrink-0" aria-hidden="true" />
+                  </span>
+                  <span>{formatNewsDateLabel(newsItem.publishedAt)}</span>
+                </div>
+                <div className="text-[14.5px] font-extrabold text-[#0F172A] dark:text-slate-50 leading-snug">
+                  {newsItem.titulo}
+                </div>
+                <div className="text-[12px] font-bold text-[#334155] dark:text-slate-300">
+                  {newsItem.sinalLabel}
+                </div>
+              </a>
             ))}
           </div>
         </section>

@@ -2,13 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Calculator,
   Home,
-  Loader2,
-  LocateFixed,
-  Moon,
   Newspaper,
   Package,
   Settings,
-  Sun,
 } from 'lucide-react';
 import {
   buildDefaultSinapiDataset,
@@ -490,14 +486,13 @@ export default function App() {
   return (
     <div className="min-h-screen w-full md:py-4 flex justify-center bg-white md:bg-[#F1F5F9] dark:bg-slate-950 md:dark:bg-slate-950">
       <div className="w-full max-w-[440px] min-h-screen md:min-h-[calc(100vh-2rem)] bg-white dark:bg-slate-900 md:border md:border-[#CBD5E1] dark:md:border-slate-700 md:rounded-3xl md:overflow-hidden flex flex-col relative">
-        {/* Compact Sticky Header */}
+        {/* Compact Single-Row Sticky Header */}
         <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-[#CBD5E1] dark:border-slate-700 px-4 py-2">
-          {/* Row 1: Brand Identity (unobstructed, zero truncation) */}
           <div className="flex items-center gap-2 min-[390px]:gap-2.5">
             {iconError ? (
               <div
                 aria-hidden="true"
-                className="w-10 h-10 rounded-xl bg-[#0A2B66] text-white flex items-center justify-center font-brand text-[16px] shrink-0"
+                className="w-9 h-9 rounded-xl bg-[#0A2B66] text-white flex items-center justify-center font-brand text-[15px] shrink-0"
               >
                 BI
               </div>
@@ -507,103 +502,49 @@ export default function App() {
                 alt="Balcão Inteligente"
                 referrerPolicy="no-referrer"
                 onError={() => setIconError(true)}
-                className="w-10 h-10 rounded-xl object-contain shrink-0"
+                className="w-9 h-9 rounded-xl object-contain shrink-0"
               />
             )}
 
-            <h1 className="font-brand font-bold text-[22px] min-[390px]:text-[23px] text-[#0F172A] dark:text-slate-50 leading-none tracking-tight whitespace-nowrap shrink-0">
+            <h1 className="font-brand font-bold text-[20px] min-[390px]:text-[21px] text-[#0F172A] dark:text-slate-50 leading-none tracking-tight whitespace-nowrap shrink-0">
               Balcão Inteligente
             </h1>
 
             <div
-              className="w-px h-10 bg-[#CBD5E1] dark:bg-slate-700 shrink-0"
+              className="w-px h-8 bg-[#CBD5E1] dark:bg-slate-700 shrink-0"
               aria-hidden="true"
             />
 
             <div className="min-w-0 flex-1 text-left text-[12px] min-[390px]:text-[13px] font-semibold text-[#334155] dark:text-slate-300 leading-tight truncate">
               {userProfile.storeName.trim() || 'Minha Loja'}
             </div>
-          </div>
 
-          {/* Row 2: Region & Theme Utility Bar (44px accessible touch targets) */}
-          <div className="mt-1.5 pt-1.5 border-t border-[#E2E8F0] dark:border-slate-800 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => detectUserUf(true)}
-                aria-label="Detectar estado pela minha localização"
-                title="Usar minha localização"
-                className="min-h-[44px] px-2.5 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 inline-flex items-center gap-1.5 text-[13px] font-bold text-[#0F172A] dark:text-slate-100 hover:border-[#94A3B8] dark:hover:border-slate-400 active:bg-[#E2E8F0] dark:active:bg-slate-700 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
-              >
-                {geoLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
-                ) : (
-                  <LocateFixed className="w-4 h-4 text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
-                )}
-                <span>Localizar</span>
-              </button>
-
-              <label htmlFor="uf-selector" className="sr-only">
-                Estado (UF)
-              </label>
-              <select
-                id="uf-selector"
-                value={selectedUf}
-                onChange={(e) => {
-                  const nextUf = e.target.value;
-                  manualOverrideRef.current = true;
-                  try {
-                    localStorage.setItem(STORAGE_KEYS.UF_MANUAL, 'true');
-                  } catch {
-                    // ignore
-                  }
-                  setGeoNotice(null);
-                  setSelectedUf(nextUf);
-                }}
-                className="min-h-[44px] px-2.5 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 text-[14px] font-extrabold text-[#0F172A] dark:text-slate-50 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
-              >
-                {availableUfs.map((uf) => (
-                  <option key={uf} value={uf}>
-                    {uf}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              type="button"
-              onClick={toggleTheme}
-              aria-pressed={isDark}
-              aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
-              title={isDark ? 'Modo claro' : 'Modo escuro'}
-              className="min-h-[44px] px-2.5 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 inline-flex items-center gap-1.5 text-[13px] font-bold text-[#0F172A] dark:text-slate-100 hover:border-[#94A3B8] dark:hover:border-slate-400 active:bg-[#E2E8F0] dark:active:bg-slate-700 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400 shrink-0"
+            <label htmlFor="uf-selector" className="sr-only">
+              Estado (UF)
+            </label>
+            <select
+              id="uf-selector"
+              value={selectedUf}
+              onChange={(e) => {
+                const nextUf = e.target.value;
+                manualOverrideRef.current = true;
+                try {
+                  localStorage.setItem(STORAGE_KEYS.UF_MANUAL, 'true');
+                } catch {
+                  // ignore
+                }
+                setGeoNotice(null);
+                setSelectedUf(nextUf);
+              }}
+              className="min-h-[44px] px-2 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 text-[13.5px] font-extrabold text-[#0F172A] dark:text-slate-50 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400 shrink-0"
             >
-              {isDark ? (
-                <>
-                  <Sun className="w-4 h-4 text-amber-300 shrink-0" aria-hidden="true" />
-                  <span>Claro</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-4 h-4 text-[#1D4ED8] shrink-0" aria-hidden="true" />
-                  <span>Escuro</span>
-                </>
-              )}
-            </button>
+              {availableUfs.map((uf) => (
+                <option key={uf} value={uf}>
+                  {uf}
+                </option>
+              ))}
+            </select>
           </div>
-
-          {geoNotice && (
-            <div
-              role="status"
-              className={`mt-2 px-3 py-1.5 rounded-xl text-[13px] font-bold border ${
-                geoNotice.type === 'info'
-                  ? 'bg-[#DBEAFE] dark:bg-blue-950/80 border-[#93C5FD] dark:border-blue-700 text-[#1D4ED8] dark:text-blue-200'
-                  : 'bg-[#FEF3C7] dark:bg-amber-950/80 border-[#FCD34D] dark:border-amber-600 text-[#B45309] dark:text-amber-200'
-              }`}
-            >
-              {geoNotice.text}
-            </div>
-          )}
         </header>
 
         {/* Main Scrollable Content */}
@@ -648,6 +589,23 @@ export default function App() {
               profile={userProfile}
               onUpdateProfile={handleUpdateProfile}
               updatedAtIso={syncState.updatedAtIso}
+              selectedUf={selectedUf}
+              availableUfs={availableUfs}
+              onSelectUf={(nextUf) => {
+                manualOverrideRef.current = true;
+                try {
+                  localStorage.setItem(STORAGE_KEYS.UF_MANUAL, 'true');
+                } catch {
+                  // ignore
+                }
+                setGeoNotice(null);
+                setSelectedUf(nextUf);
+              }}
+              onDetectUf={() => detectUserUf(true)}
+              geoLoading={geoLoading}
+              geoNotice={geoNotice}
+              isDark={isDark}
+              onToggleTheme={toggleTheme}
             />
           )}
         </main>

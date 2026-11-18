@@ -152,14 +152,11 @@ export function MarketNewsScreen({
         })}
       </div>
 
-      {/* Contagem & Transparência */}
+      {/* Contagem */}
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[13px] font-bold text-[#334155] dark:text-slate-300 font-num">
           {visibleNews.length}{' '}
           {visibleNews.length === 1 ? 'notícia atualizada' : 'notícias atualizadas'}
-        </span>
-        <span className="text-[12px] font-medium text-[#475569] dark:text-slate-400">
-          {activeTimeOption.shortLabel}
         </span>
       </div>
 
@@ -201,11 +198,6 @@ export function MarketNewsScreen({
           ))}
         </div>
       )}
-
-      {/* Rodapé informativo */}
-      <p className="text-[12px] italic text-[#475569] dark:text-slate-300 pt-1 leading-snug">
-        Monitoramento atualizado dos últimos 30 dias focado em custos de insumo, frete e oferta nas fábricas.
-      </p>
     </div>
   );
 }

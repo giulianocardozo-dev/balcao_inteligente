@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  ArrowRight,
   Calculator,
   CheckCircle2,
   ExternalLink,
@@ -126,15 +127,18 @@ export function NewsCard({ item, onOpenCalculator, compact = false }: NewsCardPr
         </p>
       )}
 
-      {/* Botão de Ação Rápida */}
-      <button
-        type="button"
-        onClick={() => onOpenCalculator(item.materialId)}
-        className="w-full min-h-[46px] px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 hover:border-[#1D4ED8] dark:hover:border-blue-400 active:scale-[0.99] text-[#0F172A] dark:text-slate-50 font-extrabold text-[14px] flex items-center justify-center gap-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
-      >
-        <Calculator className="w-4 h-4 text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
-        <span>Ver Calculadora deste Item</span>
-      </button>
+      {/* Ação compacta para Calculadora */}
+      <div className="pt-1 flex justify-end border-t border-[#E2E8F0] dark:border-slate-700/80">
+        <button
+          type="button"
+          onClick={() => onOpenCalculator(item.materialId)}
+          className="min-h-[38px] px-2 py-1 rounded-lg text-[#1D4ED8] dark:text-blue-300 hover:bg-[#DBEAFE]/60 dark:hover:bg-blue-950/60 font-extrabold text-[13px] inline-flex items-center gap-1.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
+        >
+          <Calculator className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+          <span>Simular na calculadora</span>
+          <ArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+        </button>
+      </div>
     </article>
   );
 }
