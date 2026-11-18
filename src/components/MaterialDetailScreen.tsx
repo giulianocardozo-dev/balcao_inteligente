@@ -484,6 +484,9 @@ export function MaterialDetailScreen({
             <p className="text-[14px] font-medium text-[#0F172A] dark:text-slate-100 leading-snug font-num">
               {costStatusText}
             </p>
+            <p className="text-[13px] font-medium text-[#475569] dark:text-slate-300 leading-snug">
+              Fique tranquilo: apenas você tem acesso a este preço.
+            </p>
           </div>
         </div>
 
