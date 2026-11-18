@@ -110,19 +110,32 @@ export function parseSinapiWorkbook(buffer: ArrayBuffer): ParsedExcelResult {
 
   const histCols = headers
     .map((h) => {
-      const m = h.trim().match(/^(\d{4}-\d{2})$/);
-      return m ? { header: h, month: m[1] } : null;
+      const m = h.trim().match(/^(\d{4})[-/](\d{2})(?:[-/]\d{2})?$/);
+      return m ? { header: h, month: `${m[1]}-${m[2]}` } : null;
     })
     .filter((x): x is { header: string; month: string } => x !== null)
     .sort((a, b) => a.month.localeCompare(b.month));
 
-  const prevCols = headers
+  let prevCols = headers
     .map((h) => {
-      const m = h.trim().match(/^(\d{4}-\d{2})_Prev$/i);
-      return m ? { header: h, month: m[1] } : null;
+      const m = h.trim().match(/^(\d{4})[-/](\d{2})_Prev$/i);
+      return m ? { header: h, month: `${m[1]}-${m[2]}` } : null;
     })
     .filter((x): x is { header: string; month: string } => x !== null)
     .sort((a, b) => a.month.localeCompare(b.month));
+
+  if (prevCols.length === 0) {
+    const altPrev = findHeaderKey(headers, [
+      'Prev_45d',
+      '45d_Prev',
+      'Projecao_45d',
+      'Previsao_45d',
+      'Previsao',
+    ]);
+    if (altPrev) {
+      prevCols = [{ header: altPrev, month: '45d' }];
+    }
+  }
 
   if (histCols.length === 0) {
     missing.push('colunas mensais históricas (ex.: 2026-10)');

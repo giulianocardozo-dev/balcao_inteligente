@@ -1,50 +1,56 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Calculator,
-  FileSpreadsheet,
   Home,
   Loader2,
   LocateFixed,
   Moon,
   Newspaper,
   Package,
+  Settings,
   Sun,
 } from 'lucide-react';
 import {
   buildDefaultSinapiDataset,
   buildDefaultStoreConfigs,
 } from './data/defaultDataset';
-import { ForecastUploadScreen } from './components/ForecastUploadScreen';
 import { MarketNewsScreen } from './components/MarketNewsScreen';
 import { MaterialDetailScreen } from './components/MaterialDetailScreen';
+import { SettingsScreen } from './components/SettingsScreen';
 import { SimulateScreen } from './components/SimulateScreen';
 import { TodayScreen } from './components/TodayScreen';
 import {
   AppTab,
-  DataSourceMeta,
   EvaluatedMaterial,
+  ForecastSyncState,
   SinapiMaterialRecord,
   StoreInventoryConfig,
+  UserProfile,
 } from './types/inventory';
 import { evaluateMaterial, statusPriority } from './utils/mathEngine';
 import { isExcludedMaterial } from './utils/excelHandler';
+import {
+  FORECAST_SYNC_INTERVAL_MS,
+  fetchGitHubForecast,
+  readCachedForecast,
+} from './utils/forecastSync';
 import { detectUfFromCoordinates } from './utils/ufGeolocation';
 
 const STORAGE_KEYS = {
   UF: 'balcao_inteligente_uf_v1',
   UF_MANUAL: 'balcao_inteligente_uf_manual_v1',
-  RECORDS: 'balcao_inteligente_records_v1',
-  META: 'balcao_inteligente_meta_v1',
   CONFIGS: 'balcao_inteligente_configs_v1',
   THEME: 'balcao_inteligente_theme_v1',
+  PROFILE: 'balcao_inteligente_profile_v1',
 };
 
 type ThemeMode = 'light' | 'dark';
 
-const DEFAULT_META: DataSourceMeta = {
-  type: 'demo',
-  ufCount: 27,
-  materialCount: 10,
+const DEFAULT_PROFILE: UserProfile = {
+  name: 'Marcos Oliveira',
+  storeName: 'Depósito Oliveira',
+  email: 'marcos@depositooliveira.com.br',
+  selectedPlan: 'essencial',
 };
 
 function safeReadJson<T>(key: string): T | null {
@@ -61,12 +67,24 @@ export default function App() {
   const defaultDataset = useMemo(() => buildDefaultSinapiDataset(), []);
   const defaultConfigs = useMemo(() => buildDefaultStoreConfigs(), []);
 
-  const [importedRecords, setImportedRecords] = useState<SinapiMaterialRecord[] | null>(
-    () => safeReadJson<SinapiMaterialRecord[]>(STORAGE_KEYS.RECORDS)
+  const initialCachedForecast = useMemo(() => readCachedForecast(), []);
+
+  const [remoteRecords, setRemoteRecords] = useState<SinapiMaterialRecord[] | null>(
+    () => initialCachedForecast?.records ?? null
   );
-  const [sourceMeta, setSourceMeta] = useState<DataSourceMeta>(
-    () => safeReadJson<DataSourceMeta>(STORAGE_KEYS.META) ?? DEFAULT_META
+  const [syncState, setSyncState] = useState<ForecastSyncState>(
+    () =>
+      initialCachedForecast?.syncState ?? {
+        source: 'fallback',
+        updatedAtIso: new Date().toISOString(),
+        materialCount: 10,
+        ufCount: 27,
+      }
   );
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => ({
+    ...DEFAULT_PROFILE,
+    ...(safeReadJson<Partial<UserProfile>>(STORAGE_KEYS.PROFILE) ?? {}),
+  }));
   const [storeConfigs, setStoreConfigs] = useState<Record<string, StoreInventoryConfig>>(
     () => ({
       ...defaultConfigs,
@@ -103,12 +121,15 @@ export default function App() {
     })()
   );
 
+  const syncInFlightRef = useRef(false);
+  const lastSyncCheckMsRef = useRef(0);
+
   const allRecords = useMemo(
     () =>
-      (importedRecords ?? defaultDataset).filter(
+      (remoteRecords ?? defaultDataset).filter(
         (r) => !isExcludedMaterial(r.codigoSinapi || r.id, r.insumo)
       ),
-    [importedRecords, defaultDataset]
+    [remoteRecords, defaultDataset]
   );
 
   const availableUfs = useMemo(() => {
@@ -236,8 +257,81 @@ export default function App() {
     }
   }, [isDark, theme]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(userProfile));
+    } catch {
+      // ignore storage quota errors
+    }
+  }, [userProfile]);
+
+  const runForecastSync = useCallback(async (force = false) => {
+    if (syncInFlightRef.current) return;
+    const nowMs = Date.now();
+    if (!force && nowMs - lastSyncCheckMsRef.current < 60_000) {
+      return;
+    }
+
+    syncInFlightRef.current = true;
+    lastSyncCheckMsRef.current = nowMs;
+    const controller = new AbortController();
+
+    try {
+      const result = await fetchGitHubForecast(controller.signal);
+      if (result.ok) {
+        setRemoteRecords(result.records);
+        setSyncState(result.syncState);
+      } else {
+        const cached = readCachedForecast();
+        if (cached) {
+          setRemoteRecords(cached.records);
+          setSyncState(cached.syncState);
+        }
+      }
+    } finally {
+      syncInFlightRef.current = false;
+    }
+  }, []);
+
+  // Sincronização assíncrona inicial + rechecagem a cada 8 horas e ao reabrir a aba
+  useEffect(() => {
+    void runForecastSync(true);
+
+    const intervalId = window.setInterval(() => {
+      void runForecastSync(true);
+    }, FORECAST_SYNC_INTERVAL_MS);
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        void runForecastSync(false);
+      }
+    };
+
+    const handleOnline = () => {
+      void runForecastSync(true);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [runForecastSync]);
+
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  const handleUpdateProfile = (patch: Partial<UserProfile>) => {
+    setUserProfile((prev) => ({
+      ...prev,
+      ...patch,
+    }));
   };
 
   const ufRecords = useMemo(
@@ -305,31 +399,6 @@ export default function App() {
     });
   };
 
-  const handleImportSuccess = (
-    records: SinapiMaterialRecord[],
-    meta: DataSourceMeta
-  ) => {
-    setImportedRecords(records);
-    setSourceMeta(meta);
-    try {
-      localStorage.setItem(STORAGE_KEYS.RECORDS, JSON.stringify(records));
-      localStorage.setItem(STORAGE_KEYS.META, JSON.stringify(meta));
-    } catch {
-      // If a huge file exceeds localStorage 5MB quota, keep it in memory cleanly
-    }
-  };
-
-  const handleResetToDemo = () => {
-    setImportedRecords(null);
-    setSourceMeta(DEFAULT_META);
-    try {
-      localStorage.removeItem(STORAGE_KEYS.RECORDS);
-      localStorage.removeItem(STORAGE_KEYS.META);
-    } catch {
-      // ignore
-    }
-  };
-
   const openMaterialDetail = (materialId: string) => {
     setSelectedMaterialId(materialId);
     setActiveTab('detalhe');
@@ -380,8 +449,8 @@ export default function App() {
               aria-hidden="true"
             />
 
-            <div className="min-w-0 flex-1 text-left text-[12px] min-[390px]:text-[13px] font-semibold text-[#334155] dark:text-slate-300 leading-tight">
-              Depósito Oliveira
+            <div className="min-w-0 flex-1 text-left text-[12px] min-[390px]:text-[13px] font-semibold text-[#334155] dark:text-slate-300 leading-tight truncate">
+              {userProfile.storeName.trim() || 'Minha Loja'}
             </div>
           </div>
 
@@ -495,20 +564,16 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'previsao' && (
-            <ForecastUploadScreen
-              selectedUf={selectedUf}
-              evaluatedItems={evaluatedItems}
-              allRecords={allRecords}
-              sourceMeta={sourceMeta}
-              onImportSuccess={handleImportSuccess}
-              onResetToDemo={handleResetToDemo}
-              onSelectMaterial={openMaterialDetail}
-            />
-          )}
-
           {activeTab === 'noticias' && (
             <MarketNewsScreen onOpenCalculator={openSimulator} />
+          )}
+
+          {activeTab === 'config' && (
+            <SettingsScreen
+              profile={userProfile}
+              onUpdateProfile={handleUpdateProfile}
+              updatedAtIso={syncState.updatedAtIso}
+            />
           )}
         </main>
 
@@ -568,22 +633,6 @@ export default function App() {
 
             <button
               type="button"
-              onClick={() => switchTab('previsao')}
-              aria-current={activeTab === 'previsao' ? 'page' : undefined}
-              className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] px-0.5 transition-colors ${
-                activeTab === 'previsao'
-                  ? 'text-[#15803D] dark:text-emerald-300 font-extrabold bg-[#DCFCE7]/40 dark:bg-emerald-950/60'
-                  : 'text-[#334155] dark:text-slate-300 font-semibold hover:text-[#0F172A] dark:hover:text-slate-50'
-              }`}
-            >
-              <FileSpreadsheet className="w-[21px] h-[21px] shrink-0" aria-hidden="true" />
-              <span className="text-[11px] min-[390px]:text-[11.5px] leading-none whitespace-nowrap">
-                Previsão
-              </span>
-            </button>
-
-            <button
-              type="button"
               onClick={() => switchTab('noticias')}
               aria-current={activeTab === 'noticias' ? 'page' : undefined}
               className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] px-0.5 transition-colors ${
@@ -595,6 +644,23 @@ export default function App() {
               <Newspaper className="w-[21px] h-[21px] shrink-0" aria-hidden="true" />
               <span className="text-[11px] min-[390px]:text-[11.5px] leading-none whitespace-nowrap">
                 Notícias
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => switchTab('config')}
+              aria-label="Configurações"
+              aria-current={activeTab === 'config' ? 'page' : undefined}
+              className={`flex flex-col items-center justify-center gap-0.5 min-h-[48px] px-0.5 transition-colors ${
+                activeTab === 'config'
+                  ? 'text-[#15803D] dark:text-emerald-300 font-extrabold bg-[#DCFCE7]/40 dark:bg-emerald-950/60'
+                  : 'text-[#334155] dark:text-slate-300 font-semibold hover:text-[#0F172A] dark:hover:text-slate-50'
+              }`}
+            >
+              <Settings className="w-[21px] h-[21px] shrink-0" aria-hidden="true" />
+              <span className="text-[11px] min-[390px]:text-[11.5px] leading-none whitespace-nowrap">
+                Config.
               </span>
             </button>
           </div>

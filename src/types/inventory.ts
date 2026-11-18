@@ -6,7 +6,26 @@ export type TrafficLightStatus =
 
 export type PriceTrend = 'alta' | 'queda' | 'estavel';
 
-export type AppTab = 'hoje' | 'detalhe' | 'simular' | 'previsao' | 'noticias';
+export type AppTab = 'hoje' | 'detalhe' | 'simular' | 'noticias' | 'config';
+
+export type SubscriptionPlanId = 'essencial' | 'pro' | 'rede';
+
+export interface UserProfile {
+  name: string;
+  storeName: string;
+  email: string;
+  selectedPlan: SubscriptionPlanId;
+}
+
+export type ForecastSyncSource = 'github' | 'cache' | 'fallback';
+
+export interface ForecastSyncState {
+  source: ForecastSyncSource;
+  updatedAtIso: string;
+  lastCheckedIso?: string;
+  materialCount: number;
+  ufCount: number;
+}
 
 export type NewsCategory =
   | 'todos'
