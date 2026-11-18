@@ -84,7 +84,7 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
       <section aria-label="Resumo do semáforo de compras">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-[16px] font-bold text-[#0F172A] dark:text-slate-50">
-            Decisão de hoje no pátio
+            Decisões de hoje para seu estoque
           </h2>
           {filterStatus !== 'ALL' && (
             <button
@@ -209,7 +209,7 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                 : 'text-[#334155] dark:text-slate-300'
             }`}
           >
-            Valor do estoque da sua loja
+            Valor dos materiais selecionados no seu estoque
           </div>
           <div className="mt-1.5">
             <div className="text-[24px] leading-tight font-extrabold text-[#0F172A] dark:text-slate-50 font-num">
