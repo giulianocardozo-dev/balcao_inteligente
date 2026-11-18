@@ -9,6 +9,7 @@ import {
   formatPercentSigned,
   formatQty,
   formatUnit,
+  getStoragePreposition,
 } from '../utils/mathEngine';
 
 interface SimulateScreenProps {
@@ -68,6 +69,7 @@ export function SimulateScreen({
   if (!currentMaterial) return null;
 
   const { record } = currentMaterial;
+  const storagePrep = getStoragePreposition(record);
   const baseProjPrice =
     record.historico[record.historico.length - 1]?.price ?? 0;
 
@@ -260,13 +262,13 @@ export function SimulateScreen({
               </div>
             </div>
 
-            {/* Controle 3: Estoque atual no pátio */}
+            {/* Controle 3: Estoque atual no pátio ou na prateleira */}
             <div>
               <label
                 htmlFor="sim-estoque-atual"
                 className="block text-[14px] font-bold text-[#334155] dark:text-slate-200 mb-1.5"
               >
-                Estoque atual no pátio ({formatUnit(record.unidadeComercial)})
+                Estoque atual {storagePrep} ({formatUnit(record.unidadeComercial)})
               </label>
               <div className="flex items-center gap-2">
                 <button
@@ -472,7 +474,7 @@ export function SimulateScreen({
               />
               <div>
                 <div className="text-[16px] font-extrabold text-[#B91C1C] dark:text-red-200">
-                  Risco de faltar produto no pátio!
+                  Risco de faltar produto {storagePrep}!
                 </div>
                 <p className="text-[14px] font-semibold text-[#0F172A] dark:text-slate-100 mt-0.5 leading-snug font-num">
                   Seu estoque dura {formatDays(currentMaterial.diasQueDura)} e o caminhão leva{' '}

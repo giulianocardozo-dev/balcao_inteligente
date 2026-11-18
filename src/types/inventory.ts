@@ -6,6 +6,8 @@ export type TrafficLightStatus =
 
 export type PriceTrend = 'alta' | 'queda' | 'estavel';
 
+export type StorageLocation = 'patio' | 'prateleira';
+
 export type AppTab = 'hoje' | 'detalhe' | 'simular' | 'noticias' | 'config';
 
 export type SubscriptionPlanId = 'essencial' | 'pro' | 'rede';
@@ -78,6 +80,7 @@ export interface SinapiMaterialRecord {
   codigoSinapi: string;
   insumo: string;
   unidadeComercial: string;
+  localArmazenamento?: StorageLocation;
   historico: MonthlyPoint[];
   previsoes: ForecastPoint[];
   varTrimestrePct: number;

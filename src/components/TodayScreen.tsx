@@ -20,6 +20,7 @@ import {
   formatPercentSigned,
   formatQty,
   formatUnit,
+  getStoragePrepositionCapitalized,
 } from '../utils/mathEngine';
 import { ReferencePriceBanner } from './ReferencePriceBanner';
 import { STATUS_META, StatusChip } from './StatusVisuals';
@@ -423,7 +424,7 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                       {item.record.insumo}
                     </h3>
                     <p className="text-[14px] font-medium text-[#334155] dark:text-slate-300 mt-0.5">
-                      No pátio:{' '}
+                      {getStoragePrepositionCapitalized(item.record)}:{' '}
                       <span className="font-bold text-[#0F172A] dark:text-slate-50 font-num">
                         {formatQty(item.config.estoqueAtual)}
                       </span>{' '}

@@ -3,6 +3,7 @@ import {
   ForecastPoint,
   PriceTrend,
   SinapiMaterialRecord,
+  StorageLocation,
   StoreInventoryConfig,
   TrafficLightStatus,
 } from '../types/inventory';
@@ -454,4 +455,52 @@ export function statusPriority(status: TrafficLightStatus): number {
     case 'AGUARDAR':
       return 3;
   }
+}
+
+const PRATELEIRA_KEYWORDS = [
+  'tinta',
+  'cabo',
+  'fio',
+  'tubo',
+  'pvc',
+  'eletroduto',
+  'interruptor',
+  'tomada',
+  'torneira',
+  'registro',
+  'parafuso',
+  'fechadura',
+  'verniz',
+  'massa corrida',
+  'selador',
+];
+
+export function getMaterialStorageLocation(
+  record: Pick<SinapiMaterialRecord, 'insumo' | 'localArmazenamento'>
+): StorageLocation {
+  if (record.localArmazenamento === 'patio' || record.localArmazenamento === 'prateleira') {
+    return record.localArmazenamento;
+  }
+  const normalized = record.insumo
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+  if (PRATELEIRA_KEYWORDS.some((kw) => normalized.includes(kw))) {
+    return 'prateleira';
+  }
+  return 'patio';
+}
+
+export function getStoragePreposition(
+  record: Pick<SinapiMaterialRecord, 'insumo' | 'localArmazenamento'>
+): 'no pátio' | 'na prateleira' {
+  return getMaterialStorageLocation(record) === 'prateleira' ? 'na prateleira' : 'no pátio';
+}
+
+export function getStoragePrepositionCapitalized(
+  record: Pick<SinapiMaterialRecord, 'insumo' | 'localArmazenamento'>
+): 'No pátio' | 'Na prateleira' {
+  return getMaterialStorageLocation(record) === 'prateleira' ? 'Na prateleira' : 'No pátio';
 }

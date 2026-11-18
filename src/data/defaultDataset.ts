@@ -1,4 +1,10 @@
-import { ForecastPoint, MonthlyPoint, SinapiMaterialRecord, StoreInventoryConfig } from '../types/inventory';
+import {
+  ForecastPoint,
+  MonthlyPoint,
+  SinapiMaterialRecord,
+  StorageLocation,
+  StoreInventoryConfig,
+} from '../types/inventory';
 
 export const BRAZIL_UFS: { uf: string; nome: string; fator: number }[] = [
   { uf: 'AC', nome: 'Acre', fator: 1.15 },
@@ -51,6 +57,7 @@ interface MaterialSeed {
   codigoSinapi: string;
   insumo: string;
   unidadeComercial: string;
+  localArmazenamento: StorageLocation;
   precoBaseSP: number;
   var1: number; // month +1 pct vs last hist
   var2: number; // month +2 pct vs last hist
@@ -65,6 +72,7 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     codigoSinapi: '00000033',
     insumo: 'Vergalhão CA-50 10 mm',
     unidadeComercial: 'barra 12m',
+    localArmazenamento: 'patio',
     precoBaseSP: 58.9,
     var1: 0.031,
     var2: 0.061,
@@ -83,6 +91,7 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     codigoSinapi: '00001379',
     insumo: 'Cimento CP II 50 kg',
     unidadeComercial: 'saco 50kg',
+    localArmazenamento: 'patio',
     precoBaseSP: 36.4,
     var1: 0.026,
     var2: 0.052,
@@ -101,6 +110,7 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     codigoSinapi: '00000370',
     insumo: 'Areia média',
     unidadeComercial: 'm³',
+    localArmazenamento: 'patio',
     precoBaseSP: 138.0,
     var1: -0.024,
     var2: -0.044,
@@ -119,6 +129,7 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     codigoSinapi: '00004721',
     insumo: 'Brita 1',
     unidadeComercial: 'm³',
+    localArmazenamento: 'patio',
     precoBaseSP: 144.5,
     var1: -0.021,
     var2: -0.037,
@@ -137,6 +148,7 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     codigoSinapi: '00000731',
     insumo: 'Bloco cerâmico 9x19x39',
     unidadeComercial: 'milheiro',
+    localArmazenamento: 'patio',
     precoBaseSP: 1390.0,
     var1: 0.019,
     var2: 0.037,
@@ -155,6 +167,7 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     codigoSinapi: '00034549',
     insumo: 'Bloco cerâmico 9x19x39 (furos verticais)',
     unidadeComercial: 'milheiro',
+    localArmazenamento: 'patio',
     precoBaseSP: 1580.0,
     var1: 0.004,
     var2: 0.008,
@@ -173,6 +186,7 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     codigoSinapi: '00001381',
     insumo: 'Argamassa AC-II 20 kg',
     unidadeComercial: 'saco 20kg',
+    localArmazenamento: 'patio',
     precoBaseSP: 24.9,
     var1: 0.018,
     var2: 0.034,
@@ -191,6 +205,7 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     codigoSinapi: '00007356',
     insumo: 'Tinta acrílica 18 L',
     unidadeComercial: 'lata 18L',
+    localArmazenamento: 'prateleira',
     precoBaseSP: 342.0,
     var1: -0.026,
     var2: -0.05,
@@ -209,6 +224,7 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     codigoSinapi: '00009869',
     insumo: 'Tubo PVC esgoto 100 mm',
     unidadeComercial: 'barra 6m',
+    localArmazenamento: 'prateleira',
     precoBaseSP: 74.5,
     var1: 0.016,
     var2: 0.03,
@@ -227,6 +243,7 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     codigoSinapi: '00000984',
     insumo: 'Cabo flexível 2,5 mm²',
     unidadeComercial: 'rolo 100m',
+    localArmazenamento: 'prateleira',
     precoBaseSP: 189.0,
     var1: -0.003,
     var2: -0.007,
@@ -301,6 +318,7 @@ export function buildDefaultSinapiDataset(): SinapiMaterialRecord[] {
         codigoSinapi: seed.codigoSinapi,
         insumo: seed.insumo,
         unidadeComercial: seed.unidadeComercial,
+        localArmazenamento: seed.localArmazenamento,
         historico,
         previsoes,
         varTrimestrePct: round2(seed.var3 * 100),

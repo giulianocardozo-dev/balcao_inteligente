@@ -1,5 +1,5 @@
 import { AlertTriangle, Clock, TrendingDown, TrendingUp } from 'lucide-react';
-import { TrafficLightStatus } from '../types/inventory';
+import { StorageLocation, TrafficLightStatus } from '../types/inventory';
 
 export interface StatusMeta {
   status: TrafficLightStatus;
@@ -59,6 +59,21 @@ export const STATUS_META: Record<TrafficLightStatus, StatusMeta> = {
     solidColor: 'bg-[#1D4ED8] dark:bg-blue-600 text-white',
   },
 };
+
+export function getStatusDescription(
+  status: TrafficLightStatus,
+  storage: StorageLocation = 'patio'
+): string {
+  if (storage === 'prateleira') {
+    if (status === 'COMPRAR_AGORA') {
+      return 'Prateleira baixa. Avalie repor logo para não faltar ao cliente.';
+    }
+    if (status === 'AGUARDAR') {
+      return 'Prateleira abastecida e preços sem grandes mudanças recentes.';
+    }
+  }
+  return STATUS_META[status].description;
+}
 
 export function StatusIcon({
   status,

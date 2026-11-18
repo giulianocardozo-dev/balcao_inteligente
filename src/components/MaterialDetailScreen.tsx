@@ -16,11 +16,13 @@ import {
   formatPercentSigned,
   formatQty,
   formatUnit,
+  getMaterialStorageLocation,
+  getStoragePreposition,
 } from '../utils/mathEngine';
 import { NewsCard } from './NewsCard';
 import { PriceHistoryChart } from './PriceHistoryChart';
 import { ReferencePriceBanner } from './ReferencePriceBanner';
-import { STATUS_META, StatusIcon } from './StatusVisuals';
+import { getStatusDescription, STATUS_META, StatusIcon } from './StatusVisuals';
 
 interface MaterialDetailScreenProps {
   material: EvaluatedMaterial;
@@ -47,6 +49,8 @@ export function MaterialDetailScreen({
 
   const { record, config } = material;
   const meta = STATUS_META[material.status];
+  const storageLocation = getMaterialStorageLocation(record);
+  const storagePrep = getStoragePreposition(record);
   const relatedNews = getNewsForMaterial(record.id, record.insumo, 2, newsItems);
 
   const orderQty =
@@ -205,7 +209,7 @@ export function MaterialDetailScreen({
               {meta.label}
             </div>
             <p className="text-[15px] font-semibold text-[#0F172A] dark:text-slate-100 mt-0.5 leading-snug">
-              {meta.description}
+              {getStatusDescription(material.status, storageLocation)}
             </p>
           </div>
         </div>
@@ -259,7 +263,7 @@ export function MaterialDetailScreen({
             htmlFor="edit-estoque-atual"
             className="block text-[14px] font-bold text-[#334155] dark:text-slate-200 mb-1.5"
           >
-            Estoque atual no pátio ({formatUnit(record.unidadeComercial)})
+            Estoque atual {storagePrep} ({formatUnit(record.unidadeComercial)})
           </label>
           <div className="flex items-center gap-2">
             <button
