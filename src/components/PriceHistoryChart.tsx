@@ -1,5 +1,5 @@
 import { ForecastPoint, MonthlyPoint, PriceTrend } from '../types/inventory';
-import { formatBRL, formatMonthShort } from '../utils/mathEngine';
+import { formatMonthShort, formatPercentSigned } from '../utils/mathEngine';
 
 interface PriceHistoryChartProps {
   historico: MonthlyPoint[];
@@ -17,18 +17,34 @@ export function PriceHistoryChart({
   const last12 = historico.slice(-12);
   if (last12.length === 0) return null;
 
+  const baseHistPrice = last12[last12.length - 1]?.price || 1;
+  const toPct = (val: number) => (baseHistPrice > 0 ? val / baseHistPrice - 1 : 0);
+
+  const histPcts = last12.map((h) => ({
+    month: h.month,
+    pct: toPct(h.price),
+  }));
+
+  const prevPcts = previsoes.map((p) => ({
+    month: p.month,
+    pctPrev: toPct(p.prev),
+    pctMin: toPct(p.min),
+    pctMax: toPct(p.max),
+  }));
+
   const allValues: number[] = [];
-  last12.forEach((h) => allValues.push(h.price));
-  previsoes.forEach((p) => {
-    allValues.push(p.prev, p.min, p.max);
+  histPcts.forEach((h) => allValues.push(h.pct));
+  prevPcts.forEach((p) => {
+    allValues.push(p.pctPrev, p.pctMin, p.pctMax);
   });
 
   const rawMin = Math.min(...allValues);
   const rawMax = Math.max(...allValues);
-  const pad = Math.max((rawMax - rawMin) * 0.18, rawMax * 0.02);
-  const yMin = Math.max(0, rawMin - pad);
+  const span = Math.max(rawMax - rawMin, 0.02);
+  const pad = span * 0.18;
+  const yMin = rawMin - pad;
   const yMax = rawMax + pad;
-  const ySpan = yMax - yMin || 1;
+  const ySpan = yMax - yMin || 0.01;
 
   const width = 380;
   const height = 180;
@@ -39,30 +55,30 @@ export function PriceHistoryChart({
   const plotW = width - padLeft - padRight;
   const plotH = height - padTop - padBottom;
 
-  const totalPoints = last12.length + previsoes.length;
+  const totalPoints = histPcts.length + prevPcts.length;
   const xForIndex = (idx: number) =>
     padLeft + (idx / Math.max(1, totalPoints - 1)) * plotW;
-  const yForPrice = (price: number) =>
-    padTop + plotH - ((price - yMin) / ySpan) * plotH;
+  const yForPct = (pct: number) =>
+    padTop + plotH - ((pct - yMin) / ySpan) * plotH;
 
-  const histCoords = last12.map((pt, i) => ({
+  const histCoords = histPcts.map((pt, i) => ({
     x: xForIndex(i),
-    y: yForPrice(pt.price),
+    y: yForPct(pt.pct),
     month: pt.month,
-    price: pt.price,
+    pct: pt.pct,
   }));
 
   const lastHist = histCoords[histCoords.length - 1];
 
-  const prevCoords = previsoes.map((pt, i) => {
-    const idx = last12.length + i;
+  const prevCoords = prevPcts.map((pt, i) => {
+    const idx = histPcts.length + i;
     return {
       x: xForIndex(idx),
-      yPrev: yForPrice(pt.prev),
-      yMin: yForPrice(pt.max), // higher price -> smaller Y
-      yMax: yForPrice(pt.min), // lower price -> larger Y
+      yPrev: yForPct(pt.pctPrev),
+      yMin: yForPct(pt.pctMax), // higher % -> smaller Y
+      yMax: yForPct(pt.pctMin), // lower % -> larger Y
       month: pt.month,
-      prev: pt.prev,
+      pctPrev: pt.pctPrev,
     };
   });
 
@@ -126,19 +142,19 @@ export function PriceHistoryChart({
     <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl p-4">
       <div className="flex items-center justify-between gap-2 mb-1.5">
         <h3 className="text-[16px] font-bold text-[#0F172A] dark:text-slate-50">
-          Preço nos últimos 12 meses e próximos 3
+          Índice de projeção de preços
         </h3>
       </div>
 
-      {/* Min, Max & 3-month forecast summary row */}
+      {/* Min, Max & 3-month forecast summary row (%) */}
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-2 text-[13px] font-bold font-num">
         <div className="text-[#334155] dark:text-slate-300">
-          Mín: <span className="text-[#0F172A] dark:text-slate-50">{formatBRL(yMin)}</span>
+          Mín: <span className="text-[#0F172A] dark:text-slate-50">{formatPercentSigned(rawMin)}</span>
           <span className="mx-1.5 text-[#94A3B8] dark:text-slate-500" aria-hidden="true">·</span>
-          Máx: <span className="text-[#0F172A] dark:text-slate-50">{formatBRL(yMax)}</span>
+          Máx: <span className="text-[#0F172A] dark:text-slate-50">{formatPercentSigned(rawMax)}</span>
         </div>
         <div style={{ color: trendStroke }}>
-          Em 3 meses: {formatBRL(lastForecast ? lastForecast.prev : lastHist.price)}
+          Em 3 meses: {formatPercentSigned(lastForecast ? lastForecast.pctPrev : 0)}
         </div>
       </div>
 
@@ -147,7 +163,7 @@ export function PriceHistoryChart({
           viewBox={`0 0 ${width} ${height}`}
           className="w-full h-auto block"
           role="img"
-          aria-label="Gráfico de preço dos últimos 12 meses e previsão para os próximos 3 meses"
+          aria-label="Gráfico percentual de variação dos últimos 12 meses e projeção para os próximos 3 meses"
         >
           {/* Horizontal guides */}
           <line
@@ -285,7 +301,7 @@ export function PriceHistoryChart({
             className="w-4 h-0 border-t-2 border-dashed inline-block"
             style={{ borderColor: trendStroke }}
           />
-          <span>O que vai acontecer</span>
+          <span>Próximos 3 meses</span>
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span

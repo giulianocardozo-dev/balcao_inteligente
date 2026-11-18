@@ -6,6 +6,7 @@ import {
   computeReorderSimulation,
   formatBRL,
   formatDays,
+  formatPercentSigned,
   formatQty,
   formatUnit,
 } from '../utils/mathEngine';
@@ -44,7 +45,7 @@ export function SimulateScreen({
     Math.max(10, currentMaterial?.quantidadeSugerida || currentMaterial?.config.vendas30d || 100)
   );
   const [precoCotado, setPrecoCotado] = useState<number>(
-    currentMaterial?.precoAtual ?? 50
+    currentMaterial?.precoAtual ?? 0
   );
   const [diasEsperar, setDiasEsperar] = useState<number>(45);
 
@@ -61,12 +62,14 @@ export function SimulateScreen({
           : Math.round(currentMaterial.config.vendas30d)
       )
     );
-    setPrecoCotado(currentMaterial.precoAtual);
+    setPrecoCotado(currentMaterial.precoAtual > 0 ? currentMaterial.precoAtual : 0);
   }, [currentMaterial?.record.id]);
 
   if (!currentMaterial) return null;
 
   const { record } = currentMaterial;
+  const baseProjPrice =
+    record.historico[record.historico.length - 1]?.price ?? 0;
 
   const sim1 = computeReorderSimulation({
     vendas30d,
@@ -76,7 +79,8 @@ export function SimulateScreen({
   });
 
   const sim2 = computeBuyOrWaitSimulation({
-    precoAtual: currentMaterial.precoAtual,
+    baseProjPrice,
+    precoReferenciaUsuario: currentMaterial.precoAtual,
     previsoes: record.previsoes,
     diasEntrega: currentMaterial.config.diasEntrega,
     diasQueDura: currentMaterial.diasQueDura,
@@ -86,7 +90,8 @@ export function SimulateScreen({
   });
 
   const stepFor = (base: number) => (base >= 500 ? 50 : base >= 100 ? 10 : base >= 20 ? 5 : 1);
-  const priceStep = currentMaterial.precoAtual >= 500 ? 10 : currentMaterial.precoAtual >= 100 ? 2 : 0.5;
+  const priceBaseForStep = precoCotado > 0 ? precoCotado : currentMaterial.precoAtual;
+  const priceStep = priceBaseForStep >= 500 ? 10 : priceBaseForStep >= 100 ? 2 : 0.5;
 
   const parseNumericInput = (
     raw: string,
@@ -386,7 +391,7 @@ export function SimulateScreen({
                   type="button"
                   aria-label="Diminuir preço cotado"
                   onClick={() =>
-                    setPrecoCotado((v) => Math.max(0.01, Math.round((v - priceStep) * 100) / 100))
+                    setPrecoCotado((v) => Math.max(0, Math.round((v - priceStep) * 100) / 100))
                   }
                   className="w-12 h-12 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 flex items-center justify-center text-[#0F172A] dark:text-slate-50 active:bg-[#E2E8F0] dark:active:bg-slate-700 shrink-0"
                 >
@@ -395,11 +400,12 @@ export function SimulateScreen({
                 <input
                   id="sim-preco-cotado"
                   type="number"
-                  min={0.01}
+                  min={0}
                   step="0.10"
                   inputMode="decimal"
                   value={precoCotado}
-                  onChange={(e) => parseNumericInput(e.target.value, setPrecoCotado, 0.01)}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => parseNumericInput(e.target.value, setPrecoCotado, 0)}
                   className="flex-1 min-w-0 h-12 px-3 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 text-center text-[20px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num"
                 />
                 <button
@@ -521,10 +527,10 @@ export function SimulateScreen({
               </div>
               <div>
                 <div className="text-[13px] font-semibold text-[#334155] dark:text-slate-200">
-                  Preço esperado em {diasEsperar}d
+                  Projeção em {diasEsperar}d
                 </div>
                 <div className="text-[20px] font-extrabold text-[#0F172A] dark:text-slate-50">
-                  {formatBRL(sim2.precoEsperadoNoPrazo)}
+                  {formatPercentSigned(sim2.variacaoProjetada)}
                 </div>
                 <div className="text-[12px] font-medium text-[#334155] dark:text-slate-300">
                   Total hoje: {formatBRL(sim2.custoHoje)}

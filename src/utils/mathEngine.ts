@@ -18,24 +18,32 @@ export function evaluateMaterial(
   config: StoreInventoryConfig
 ): EvaluatedMaterial {
   const lastHist = record.historico[record.historico.length - 1];
-  const precoAtual = lastHist ? lastHist.price : 0;
+  const baseProjPrice = lastHist ? lastHist.price : 0;
 
-  const p1 = record.previsoes[0] ?? { month: '', prev: precoAtual, min: precoAtual, max: precoAtual };
+  const p1 = record.previsoes[0] ?? { month: '', prev: baseProjPrice, min: baseProjPrice, max: baseProjPrice };
   const p2 = record.previsoes[1] ?? p1;
   const p3 = record.previsoes[2] ?? p2;
 
-  const preco45d = (p1.prev + p2.prev) / 2;
-  const min45d = (p1.min + p2.min) / 2;
-  const max45d = (p1.max + p2.max) / 2;
-  const preco90d = p3.prev;
+  const proj45d = (p1.prev + p2.prev) / 2;
+  const projMin45d = (p1.min + p2.min) / 2;
+  const projMax45d = (p1.max + p2.max) / 2;
 
-  const var45d = precoAtual > 0 ? preco45d / precoAtual - 1 : 0;
+  const var45d = baseProjPrice > 0 ? proj45d / baseProjPrice - 1 : 0;
+  const varMin45d = baseProjPrice > 0 ? projMin45d / baseProjPrice - 1 : 0;
+  const varMax45d = baseProjPrice > 0 ? projMax45d / baseProjPrice - 1 : 0;
   const var90d =
-    precoAtual > 0
+    baseProjPrice > 0
       ? p3.prev > 0
-        ? p3.prev / precoAtual - 1
+        ? p3.prev / baseProjPrice - 1
         : record.varTrimestrePct / 100
       : 0;
+
+  const precoReferenciaUsuario = Math.max(0, config.custoMedio);
+  const precoAtual = precoReferenciaUsuario;
+  const preco45d = precoReferenciaUsuario > 0 ? precoReferenciaUsuario * (1 + var45d) : 0;
+  const min45d = precoReferenciaUsuario > 0 ? precoReferenciaUsuario * (1 + varMin45d) : 0;
+  const max45d = precoReferenciaUsuario > 0 ? precoReferenciaUsuario * (1 + varMax45d) : 0;
+  const preco90d = precoReferenciaUsuario > 0 ? precoReferenciaUsuario * (1 + var90d) : 0;
 
   const tendencia = classifyTrend(var45d);
 
@@ -66,15 +74,16 @@ export function evaluateMaterial(
   }
 
   const economiaEstimada =
-    (status === 'COMPRAR_AGORA' || status === 'ANTECIPAR_COMPRA') && var45d > 0
-      ? quantidadeSugerida * precoAtual * var45d
+    (status === 'COMPRAR_AGORA' || status === 'ANTECIPAR_COMPRA') &&
+    var45d > 0 &&
+    precoReferenciaUsuario > 0
+      ? quantidadeSugerida * precoReferenciaUsuario * var45d
       : 0;
 
-  const dinheiroParado = estoqueAtual * (config.custoMedio > 0 ? config.custoMedio : precoAtual);
+  const dinheiroParado = estoqueAtual * precoReferenciaUsuario;
 
-  const custoRef = config.custoMedio > 0 ? config.custoMedio : precoAtual;
-  const diferencaCustoReais = custoRef - precoAtual;
-  const diferencaCustoPct = precoAtual > 0 ? custoRef / precoAtual - 1 : 0;
+  const diferencaCustoReais = 0;
+  const diferencaCustoPct = 0;
 
   return {
     record,
@@ -134,27 +143,30 @@ export function computeReorderSimulation(params: {
   };
 }
 
-export function interpolateExpectedPrice(
-  precoAtual: number,
+export function interpolateProjectedVariationPct(
+  baseProjPrice: number,
   previsoes: ForecastPoint[],
   daysAhead: number
 ): number {
-  const p30 = previsoes[0]?.prev ?? precoAtual;
-  const p60 = previsoes[1]?.prev ?? p30;
-  const p90 = previsoes[2]?.prev ?? p60;
+  if (baseProjPrice <= 0) return 0;
+
+  const v30 = previsoes[0] ? previsoes[0].prev / baseProjPrice - 1 : 0;
+  const v60 = previsoes[1] ? previsoes[1].prev / baseProjPrice - 1 : v30;
+  const v90 = previsoes[2] ? previsoes[2].prev / baseProjPrice - 1 : v60;
 
   const d = Math.max(0, Math.min(90, daysAhead));
   if (d <= 30) {
-    return precoAtual + ((p30 - precoAtual) * d) / 30;
+    return (v30 * d) / 30;
   }
   if (d <= 60) {
-    return p30 + ((p60 - p30) * (d - 30)) / 30;
+    return v30 + ((v60 - v30) * (d - 30)) / 30;
   }
-  return p60 + ((p90 - p60) * (d - 60)) / 30;
+  return v60 + ((v90 - v60) * (d - 60)) / 30;
 }
 
 export function computeBuyOrWaitSimulation(params: {
-  precoAtual: number;
+  baseProjPrice: number;
+  precoReferenciaUsuario: number;
   previsoes: ForecastPoint[];
   diasEntrega: number;
   diasQueDura: number;
@@ -163,14 +175,18 @@ export function computeBuyOrWaitSimulation(params: {
   diasEsperar: number;
 }) {
   const quantidade = Math.max(1, params.quantidade);
-  const precoCotado = Math.max(0.01, params.precoCotado);
+  const precoCotado = Math.max(0, params.precoCotado);
   const diasEsperar = Math.max(1, Math.min(90, params.diasEsperar));
 
-  const precoEsperadoNoPrazo = interpolateExpectedPrice(
-    params.precoAtual,
+  const variacaoProjetada = interpolateProjectedVariationPct(
+    params.baseProjPrice,
     params.previsoes,
     diasEsperar
   );
+
+  const baseCalculo =
+    params.precoReferenciaUsuario > 0 ? params.precoReferenciaUsuario : precoCotado;
+  const precoEsperadoNoPrazo = baseCalculo * (1 + variacaoProjetada);
 
   const custoHoje = quantidade * precoCotado;
   const custoEsperando = quantidade * precoEsperadoNoPrazo;
@@ -185,6 +201,7 @@ export function computeBuyOrWaitSimulation(params: {
     : 0;
 
   return {
+    variacaoProjetada,
     precoEsperadoNoPrazo,
     precoAlvoMaximo: precoEsperadoNoPrazo,
     custoHoje,

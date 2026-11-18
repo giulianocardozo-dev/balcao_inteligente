@@ -97,17 +97,11 @@ export function MaterialDetailScreen({
   };
 
   const custoTotalEstoque = config.estoqueAtual * config.custoMedio;
+  const hasRefPrice = config.custoMedio > 0;
 
-  const costDiffAbs = Math.abs(material.diferencaCustoReais);
-  const costDiffPctFormatted = Math.abs(material.diferencaCustoPct * 100)
-    .toFixed(1)
-    .replace('.', ',');
-  const costStatusText =
-    Math.abs(material.diferencaCustoPct) < 0.005
-      ? `Seu custo médio (${formatBRL(config.custoMedio)}) está em linha com a referência atual.`
-      : material.diferencaCustoReais < 0
-      ? `Seu custo médio (${formatBRL(config.custoMedio)}) está ${formatBRL(costDiffAbs)} (${costDiffPctFormatted}%) abaixo da referência atual (${formatBRL(material.precoAtual)}).`
-      : `Seu custo médio (${formatBRL(config.custoMedio)}) está ${formatBRL(costDiffAbs)} (${costDiffPctFormatted}%) acima da referência atual (${formatBRL(material.precoAtual)}).`;
+  const costStatusText = !hasRefPrice
+    ? 'Informe o preço de referência acima para calcular o total em estoque e a economia estimada.'
+    : `Preço de referência salvo: ${formatBRL(config.custoMedio)} por ${record.unidadeComercial}. Total em estoque: ${formatBRL(custoTotalEstoque)}.`;
 
   const trendLabel =
     material.tendencia === 'alta'
@@ -161,21 +155,27 @@ export function MaterialDetailScreen({
 
         <div className="mt-2.5 grid grid-cols-3 gap-2 pt-2.5 border-t border-[#E2E8F0] dark:border-slate-700">
           <div>
-            <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Ref. hoje</div>
-            <div className="text-[15px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num">
-              {formatBRL(material.precoAtual)}
-            </div>
-          </div>
-          <div>
-            <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Custo médio</div>
-            <div className="text-[15px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num">
-              {formatBRL(config.custoMedio)}
+            <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Preço de ref.</div>
+            <div
+              className={`text-[15px] font-extrabold font-num ${
+                hasRefPrice
+                  ? 'text-[#0F172A] dark:text-slate-50'
+                  : 'text-[#B45309] dark:text-amber-300'
+              }`}
+            >
+              {hasRefPrice ? formatBRL(config.custoMedio) : 'R$ 0,00'}
             </div>
           </div>
           <div>
             <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Total estoque</div>
             <div className="text-[15px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num">
               {formatBRL(custoTotalEstoque)}
+            </div>
+          </div>
+          <div>
+            <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Projeção 45d</div>
+            <div className={`text-[15px] font-extrabold font-num ${trendTextColor}`}>
+              {formatPercentSigned(material.var45d)}
             </div>
           </div>
         </div>
@@ -362,7 +362,7 @@ export function MaterialDetailScreen({
               htmlFor="edit-custo-medio"
               className="block text-[11px] min-[410px]:text-[12.5px] font-bold text-[#334155] dark:text-slate-200 tracking-tight leading-tight whitespace-nowrap mb-1.5"
             >
-              Seu custo médio (R$)
+              Preço de referência (R$)
             </label>
             <input
               id="edit-custo-medio"
@@ -372,14 +372,25 @@ export function MaterialDetailScreen({
               step="0.10"
               inputMode="decimal"
               value={config.custoMedio}
+              onFocus={(e) => e.target.select()}
               onChange={(e) => handleNumberInput('custoMedio', e.target.value, 0)}
-              className="w-full h-12 px-3 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 text-center text-[18px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num"
+              className={`w-full h-12 px-3 rounded-xl border text-center text-[18px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num ${
+                hasRefPrice
+                  ? 'bg-white dark:bg-slate-900 border-[#CBD5E1] dark:border-slate-600'
+                  : 'bg-[#FEF3C7]/45 dark:bg-amber-950/35 border-[#B45309] dark:border-amber-400'
+              }`}
             />
             <p
               id="edit-custo-medio-help"
-              className="text-[12px] font-medium text-[#334155] dark:text-slate-300 mt-1.5 leading-snug"
+              className={`text-[12px] mt-1.5 leading-snug ${
+                hasRefPrice
+                  ? 'font-medium text-[#334155] dark:text-slate-300'
+                  : 'font-bold text-[#B45309] dark:text-amber-300'
+              }`}
             >
-              Quanto pagou por unidade para comparar com a média regional
+              {hasRefPrice
+                ? 'Salvo automaticamente. Base para calcular variação e estoque.'
+                : 'Obrigatório: informe seu preço de referência atual por unidade.'}
             </p>
           </div>
         </div>
@@ -428,39 +439,39 @@ export function MaterialDetailScreen({
             </div>
             <div className="space-y-1 text-[14px] text-[#334155] dark:text-slate-300 font-num">
               <div>
-                Hoje:{' '}
-                <strong className="font-extrabold text-[#0F172A] dark:text-slate-50">
-                  {formatBRL(material.precoAtual)}
-                </strong>{' '}
-                <span className="text-[13px] font-medium text-[#475569] dark:text-slate-400">
-                  (Referência Varejo/Retira)
-                </span>
+                Preço de referência:{' '}
+                <strong
+                  className={`font-extrabold ${
+                    hasRefPrice
+                      ? 'text-[#0F172A] dark:text-slate-50'
+                      : 'text-[#B45309] dark:text-amber-300'
+                  }`}
+                >
+                  {hasRefPrice ? formatBRL(config.custoMedio) : 'Não informado (R$ 0,00)'}
+                </strong>
               </div>
               <div>
-                Em 45 dias:{' '}
-                <strong className="font-extrabold text-[#0F172A] dark:text-slate-50">
-                  ~{formatBRL(material.preco45d)}
+                Projeção em 45 dias:{' '}
+                <strong className={`font-extrabold ${trendTextColor}`}>
+                  {formatPercentSigned(material.var45d)}
                 </strong>{' '}
                 <span className={`font-bold ${trendTextColor}`}>
-                  ({formatPercentSigned(material.var45d)} · {trendLabel})
+                  ({trendLabel})
                 </span>
               </div>
               <div>
-                Em 3 meses:{' '}
+                Projeção em 3 meses:{' '}
                 <strong className="font-extrabold text-[#0F172A] dark:text-slate-50">
-                  ~{formatBRL(material.preco90d)}
-                </strong>{' '}
-                <span className="font-semibold text-[#334155] dark:text-slate-300">
-                  ({formatPercentSigned(material.var90d)})
-                </span>
+                  {formatPercentSigned(material.var90d)}
+                </strong>
               </div>
             </div>
           </div>
 
-          {/* Card 3 — Seu Custo */}
+          {/* Card 3 — Referência da Loja */}
           <div className="rounded-xl bg-white dark:bg-slate-900/90 border border-[#CBD5E1] dark:border-slate-700 p-3.5 space-y-1">
             <div className="text-[13px] font-extrabold uppercase tracking-wide text-[#334155] dark:text-slate-300">
-              Seu Custo
+              Referência da Loja
             </div>
             <p className="text-[14px] font-medium text-[#0F172A] dark:text-slate-100 leading-snug font-num">
               {costStatusText}

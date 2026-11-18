@@ -47,7 +47,7 @@ import { detectUfFromCoordinates } from './utils/ufGeolocation';
 const STORAGE_KEYS = {
   UF: 'balcao_inteligente_uf_v1',
   UF_MANUAL: 'balcao_inteligente_uf_manual_v1',
-  CONFIGS: 'balcao_inteligente_configs_v1',
+  CONFIGS: 'balcao_inteligente_configs_v2',
   THEME: 'balcao_inteligente_theme_v1',
   PROFILE: 'balcao_inteligente_profile_v1',
 };
@@ -416,13 +416,11 @@ export default function App() {
     return ufRecords
       .map((rec) => {
         const existingCfg = storeConfigs[rec.id];
-        const lastHist = rec.historico[rec.historico.length - 1];
-        const fallbackPrice = lastHist ? lastHist.price : 50;
         const cfg: StoreInventoryConfig = existingCfg ?? {
           estoqueAtual: 60,
           vendas30d: 120,
           diasEntrega: 5,
-          custoMedio: fallbackPrice,
+          custoMedio: 0,
           variacaoDemanda: 0.25,
         };
         return evaluateMaterial(rec, cfg);
@@ -459,7 +457,7 @@ export default function App() {
         estoqueAtual: 60,
         vendas30d: 120,
         diasEntrega: 5,
-        custoMedio: activeMaterial?.precoAtual ?? 50,
+        custoMedio: 0,
         variacaoDemanda: 0.25,
       };
       return {
