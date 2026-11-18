@@ -211,58 +211,36 @@ export function SettingsScreen({
           Região e aparência
         </h3>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5 flex-1 min-w-[180px]">
-            <MapPin className="w-4 h-4 text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
-            <label htmlFor="cfg-uf-selector" className="text-[14px] font-bold text-[#334155] dark:text-slate-200">
-              UF:
-            </label>
-            <select
-              id="cfg-uf-selector"
-              value={selectedUf}
-              onChange={(e) => onSelectUf(e.target.value)}
-              className="min-h-[44px] px-2.5 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 text-[14px] font-extrabold text-[#0F172A] dark:text-slate-50 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
-            >
-              {availableUfs.map((uf) => (
-                <option key={uf} value={uf}>
-                  {uf}
-                </option>
-              ))}
-            </select>
-
-            <button
-              type="button"
-              onClick={onDetectUf}
-              aria-label="Detectar estado pela minha localização"
-              className="min-h-[44px] px-3 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 inline-flex items-center gap-1.5 text-[13px] font-bold text-[#0F172A] dark:text-slate-100 hover:border-[#94A3B8] dark:hover:border-slate-400 active:bg-[#E2E8F0] dark:active:bg-slate-700 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
-            >
-              {geoLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
-              ) : (
-                <LocateFixed className="w-4 h-4 text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
-              )}
-              <span>Localizar</span>
-            </button>
-          </div>
+        <div className="flex items-center gap-1.5">
+          <MapPin className="w-4 h-4 text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
+          <label htmlFor="cfg-uf-selector" className="text-[14px] font-bold text-[#334155] dark:text-slate-200">
+            UF:
+          </label>
+          <select
+            id="cfg-uf-selector"
+            value={selectedUf}
+            onChange={(e) => onSelectUf(e.target.value)}
+            className="min-h-[44px] px-2.5 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 text-[14px] font-extrabold text-[#0F172A] dark:text-slate-50 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
+          >
+            {availableUfs.map((uf) => (
+              <option key={uf} value={uf}>
+                {uf}
+              </option>
+            ))}
+          </select>
 
           <button
             type="button"
-            onClick={onToggleTheme}
-            aria-pressed={isDark}
-            aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
-            className="min-h-[44px] px-3 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 inline-flex items-center gap-1.5 text-[13px] font-bold text-[#0F172A] dark:text-slate-100 hover:border-[#94A3B8] dark:hover:border-slate-400 active:bg-[#E2E8F0] dark:active:bg-slate-700 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400 shrink-0"
+            onClick={onDetectUf}
+            aria-label="Detectar estado pela minha localização"
+            className="min-h-[44px] px-3 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 inline-flex items-center gap-1.5 text-[13px] font-bold text-[#0F172A] dark:text-slate-100 hover:border-[#94A3B8] dark:hover:border-slate-400 active:bg-[#E2E8F0] dark:active:bg-slate-700 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
           >
-            {isDark ? (
-              <>
-                <Sun className="w-4 h-4 text-amber-300 shrink-0" aria-hidden="true" />
-                <span>Modo claro</span>
-              </>
+            {geoLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
             ) : (
-              <>
-                <Moon className="w-4 h-4 text-[#1D4ED8] shrink-0" aria-hidden="true" />
-                <span>Modo escuro</span>
-              </>
+              <LocateFixed className="w-4 h-4 text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
             )}
+            <span>Localizar</span>
           </button>
         </div>
 
@@ -278,6 +256,28 @@ export function SettingsScreen({
             {geoNotice.text}
           </div>
         )}
+
+        <div className="flex justify-start">
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            aria-pressed={isDark}
+            aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
+            className="min-h-[44px] px-3 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 inline-flex items-center gap-1.5 text-[13px] font-bold text-[#0F172A] dark:text-slate-100 hover:border-[#94A3B8] dark:hover:border-slate-400 active:bg-[#E2E8F0] dark:active:bg-slate-700 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
+          >
+            {isDark ? (
+              <>
+                <Sun className="w-4 h-4 text-amber-300 shrink-0" aria-hidden="true" />
+                <span>Modo claro</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-4 h-4 text-[#1D4ED8] shrink-0" aria-hidden="true" />
+                <span>Modo escuro</span>
+              </>
+            )}
+          </button>
+        </div>
       </section>
 
       {/* Seção 3: Plano de Assinatura (Futuro) */}

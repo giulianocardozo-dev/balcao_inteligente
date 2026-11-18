@@ -7,6 +7,7 @@ import {
   Settings,
 } from 'lucide-react';
 import {
+  BRAZIL_UFS,
   buildDefaultSinapiDataset,
   buildDefaultStoreConfigs,
 } from './data/defaultDataset';
@@ -483,11 +484,14 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const selectedStateName =
+    BRAZIL_UFS.find((item) => item.uf === selectedUf)?.nome ?? selectedUf;
+
   return (
     <div className="min-h-screen w-full md:py-4 flex justify-center bg-white md:bg-[#F1F5F9] dark:bg-slate-950 md:dark:bg-slate-950">
       <div className="w-full max-w-[440px] min-h-screen md:min-h-[calc(100vh-2rem)] bg-white dark:bg-slate-900 md:border md:border-[#CBD5E1] dark:md:border-slate-700 md:rounded-3xl md:overflow-hidden flex flex-col relative">
         {/* Compact Single-Row Sticky Header */}
-        <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-[#CBD5E1] dark:border-slate-700 px-4 py-2">
+        <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-[#CBD5E1] dark:border-slate-700 px-4 py-2.5">
           <div className="flex items-center gap-2 min-[390px]:gap-2.5">
             {iconError ? (
               <div
@@ -506,44 +510,23 @@ export default function App() {
               />
             )}
 
-            <h1 className="font-brand font-bold text-[20px] min-[390px]:text-[21px] text-[#0F172A] dark:text-slate-50 leading-none tracking-tight whitespace-nowrap shrink-0">
+            <h1 className="font-brand font-bold text-[21px] min-[390px]:text-[22px] text-[#0F172A] dark:text-slate-50 leading-none tracking-tight whitespace-nowrap shrink-0">
               Balcão Inteligente
             </h1>
 
             <div
-              className="w-px h-8 bg-[#CBD5E1] dark:bg-slate-700 shrink-0"
+              className="w-px h-9 bg-[#CBD5E1] dark:bg-slate-700 shrink-0"
               aria-hidden="true"
             />
 
-            <div className="min-w-0 flex-1 text-left text-[12px] min-[390px]:text-[13px] font-semibold text-[#334155] dark:text-slate-300 leading-tight truncate">
-              {userProfile.storeName.trim() || 'Minha Loja'}
+            <div className="min-w-0 flex-1 text-left leading-tight">
+              <div className="text-[12.5px] min-[390px]:text-[13px] font-bold text-[#0F172A] dark:text-slate-100 truncate">
+                {userProfile.storeName.trim() || 'Minha Loja'}
+              </div>
+              <div className="text-[11px] min-[390px]:text-[11.5px] font-medium text-[#475569] dark:text-slate-300 truncate">
+                {selectedStateName}
+              </div>
             </div>
-
-            <label htmlFor="uf-selector" className="sr-only">
-              Estado (UF)
-            </label>
-            <select
-              id="uf-selector"
-              value={selectedUf}
-              onChange={(e) => {
-                const nextUf = e.target.value;
-                manualOverrideRef.current = true;
-                try {
-                  localStorage.setItem(STORAGE_KEYS.UF_MANUAL, 'true');
-                } catch {
-                  // ignore
-                }
-                setGeoNotice(null);
-                setSelectedUf(nextUf);
-              }}
-              className="min-h-[44px] px-2 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-600 text-[13.5px] font-extrabold text-[#0F172A] dark:text-slate-50 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400 shrink-0"
-            >
-              {availableUfs.map((uf) => (
-                <option key={uf} value={uf}>
-                  {uf}
-                </option>
-              ))}
-            </select>
           </div>
         </header>
 
