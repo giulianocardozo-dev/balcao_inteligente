@@ -21,6 +21,7 @@ import {
   formatQty,
   formatUnit,
 } from '../utils/mathEngine';
+import { ReferencePriceBanner } from './ReferencePriceBanner';
 import { STATUS_META, StatusChip } from './StatusVisuals';
 
 interface TodayScreenProps {
@@ -100,6 +101,9 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
 
   return (
     <div className="space-y-5">
+      {/* Alerta de Preços de Referência */}
+      <ReferencePriceBanner items={items} onJumpToMaterial={onSelectMaterial} />
+
       {/* Card de Boas-vindas */}
       <section
         aria-label="Guia rápido do balcão"

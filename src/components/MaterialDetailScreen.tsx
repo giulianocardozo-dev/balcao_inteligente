@@ -19,6 +19,7 @@ import {
 } from '../utils/mathEngine';
 import { NewsCard } from './NewsCard';
 import { PriceHistoryChart } from './PriceHistoryChart';
+import { ReferencePriceBanner } from './ReferencePriceBanner';
 import { STATUS_META, StatusIcon } from './StatusVisuals';
 
 interface MaterialDetailScreenProps {
@@ -119,6 +120,13 @@ export function MaterialDetailScreen({
 
   return (
     <div className="space-y-4">
+      {/* Alerta de Preços de Referência */}
+      <ReferencePriceBanner
+        items={allMaterials}
+        currentMaterialId={record.id}
+        onJumpToMaterial={onSelectMaterial}
+      />
+
       {/* Top navigation & quick material switcher */}
       <div className="flex items-center gap-2">
         <button
