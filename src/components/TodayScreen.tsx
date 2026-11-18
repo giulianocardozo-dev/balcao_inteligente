@@ -212,7 +212,7 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                 : 'text-[#334155] dark:text-slate-300'
             }`}
           >
-            Dinheiro parado no estoque
+            Valor do estoque da sua loja
           </div>
           <div className="mt-1.5">
             <div className="text-[24px] leading-tight font-extrabold text-[#0F172A] dark:text-slate-50 font-num">

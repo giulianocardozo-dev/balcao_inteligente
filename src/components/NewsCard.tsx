@@ -3,7 +3,6 @@ import {
   Calculator,
   CheckCircle2,
   ExternalLink,
-  Lightbulb,
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
@@ -66,7 +65,6 @@ function SignalIcon({ signal }: { signal: NewsSignal }) {
 
 export function NewsCard({ item, onOpenCalculator, compact = false }: NewsCardProps) {
   const signalStyle = SIGNAL_STYLES[item.sinal];
-  const isYellowHighlight = item.destaqueCor === 'amarelo';
   const dateLabel = formatNewsDateLabel(item.publishedAt);
 
   return (
@@ -127,29 +125,6 @@ export function NewsCard({ item, onOpenCalculator, compact = false }: NewsCardPr
           {item.gatilhos}
         </p>
       )}
-
-      {/* Box de Destaque "Impacto no Seu Balcão" (Amarelo ou Azul) */}
-      <div
-        className={`rounded-xl border p-3.5 space-y-1 ${
-          isYellowHighlight
-            ? 'bg-[#FEF3C7]/85 dark:bg-amber-950/75 border-[#FCD34D] dark:border-amber-700'
-            : 'bg-[#DBEAFE]/85 dark:bg-blue-950/75 border-[#93C5FD] dark:border-blue-700'
-        }`}
-      >
-        <div
-          className={`flex items-center gap-1.5 text-[13px] font-extrabold ${
-            isYellowHighlight
-              ? 'text-[#92400E] dark:text-amber-200'
-              : 'text-[#1E40AF] dark:text-blue-200'
-          }`}
-        >
-          <Lightbulb className="w-4 h-4 shrink-0" aria-hidden="true" />
-          <span>O que isso significa para a sua loja:</span>
-        </div>
-        <p className="text-[14px] font-semibold text-[#0F172A] dark:text-slate-100 leading-snug">
-          {item.impactoBalcao}
-        </p>
-      </div>
 
       {/* Botão de Ação Rápida */}
       <button
