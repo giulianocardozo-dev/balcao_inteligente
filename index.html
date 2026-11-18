@@ -16,6 +16,9 @@
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/png" href="/assets/aistudio/_cone_BI_em_Bloco_de_Bet_o_6a6c26ff.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1E3A8A" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -35,5 +38,12 @@
   <body class="bg-white dark:bg-slate-950 text-[#0F172A] dark:text-slate-50 antialiased selection:bg-[#DBEAFE] selection:text-[#1D4ED8] dark:selection:bg-blue-900 dark:selection:text-blue-100">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+<script>
+  if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/service-worker.js');
+    });
+  }
+</script>
   </body>
 </html>
