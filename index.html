@@ -15,13 +15,76 @@
     />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="icon" type="image/png" href="/assets/aistudio/_cone_BI_em_Bloco_de_Bet_o_6a6c26ff.png" />
+    <link rel="icon" type="image/png" href="/assets/aistudio/icon-512_ff246861.png" />
+    <link rel="apple-touch-icon" href="/assets/aistudio/icon-512_ff246861.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Barlow:wght@700&family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <style>
+      #app-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background-color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        padding: max(2rem, env(safe-area-inset-top)) 1.5rem max(2.25rem, env(safe-area-inset-bottom));
+        opacity: 1;
+        transition: opacity 320ms ease;
+      }
+      #app-splash.is-hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #app-splash .splash-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      #app-splash .splash-app-icon {
+        width: 96px;
+        height: 96px;
+        border-radius: 22px;
+        object-fit: contain;
+        box-shadow: 0 10px 24px -6px rgba(10, 43, 102, 0.18);
+      }
+      #app-splash .splash-app-title {
+        margin-top: 16px;
+        font-family: "Barlow", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+        font-weight: 700;
+        font-size: 26px;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        color: #0f172a;
+      }
+      #app-splash .splash-footer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      #app-splash .splash-powered {
+        font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        color: #64748b;
+        letter-spacing: 0.04em;
+        margin-bottom: 6px;
+      }
+      #app-splash .splash-partner-logo {
+        height: 28px;
+        width: auto;
+        max-width: 140px;
+        object-fit: contain;
+        display: block;
+      }
+    </style>
     <script>
       (function () {
         try {
@@ -33,6 +96,25 @@
     </script>
   </head>
   <body class="bg-white dark:bg-slate-950 text-[#0F172A] dark:text-slate-50 antialiased selection:bg-[#DBEAFE] selection:text-[#1D4ED8] dark:selection:bg-blue-900 dark:selection:text-blue-100">
+    <div id="app-splash" aria-hidden="true">
+      <div></div>
+      <div class="splash-center">
+        <img
+          src="/assets/aistudio/icon-512_ff246861.png"
+          alt="Balcão Inteligente"
+          class="splash-app-icon"
+        />
+        <div class="splash-app-title">Balcão Inteligente</div>
+      </div>
+      <div class="splash-footer">
+        <span class="splash-powered">Powered by</span>
+        <img
+          src="/assets/aistudio/valoremind_logo_20d117c2.png"
+          alt="Valoremind"
+          class="splash-partner-logo"
+        />
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

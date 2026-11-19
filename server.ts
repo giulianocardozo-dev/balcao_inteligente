@@ -618,7 +618,7 @@ REGRAS CRÍTICAS:
 
   const modelAttempts: Array<{ model: string; useThinking: boolean }> = [
     { model: 'gemini-4-hydrogen', useThinking: true },
-    { model: 'gemini-3.8-flash', useThinking: false },
+    { model: 'gemini-3.1-flash-lite', useThinking: false },
   ];
 
   let lastError: unknown = null;
@@ -748,7 +748,10 @@ REGRAS CRÍTICAS:
       };
     } catch (err) {
       lastError = err;
-      if ((err as Error & { statusCode?: number })?.statusCode === 500) {
+      const errStatus = (err as { status?: number; statusCode?: number })?.status ??
+        (err as { statusCode?: number })?.statusCode;
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (errStatus === 500 || errStatus === 429 || errMsg.includes('RESOURCE_EXHAUSTED')) {
         throw err;
       }
     }
@@ -786,7 +789,6 @@ async function getLatestNews(forceRefresh: boolean): Promise<NewsCacheEntry> {
     })
     .catch((err) => {
       newsCooldownUntilMs = Date.now() + NEWS_COOLDOWN_MS;
-      console.warn('Gemini web news sync failed:', err);
       if (newsCache) return newsCache;
       throw err;
     })
@@ -892,15 +894,9 @@ async function startServer() {
         updatedAtIso: entry.updatedAtIso,
         items: entry.items,
       });
-    } catch (err) {
-      const status =
-        typeof (err as { status?: unknown })?.status === 'number'
-          ? (err as { status: number }).status
-          : typeof (err as { statusCode?: unknown })?.statusCode === 'number'
-            ? (err as { statusCode: number }).statusCode
-            : 429;
-
-      res.status(status >= 400 && status < 600 ? status : 429).json({
+    } catch {
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(200).json({
         ok: false,
         error: 'Houve um problema na atualização. Exibindo as últimas notícias salvas',
       });
