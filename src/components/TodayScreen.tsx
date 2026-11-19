@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { EvaluatedMaterial, TrafficLightStatus } from '../types/inventory';
 import {
+  formatBRL,
   formatBRLWhole,
   formatPercentSigned,
   formatQty,
@@ -330,6 +331,18 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                         {formatQty(item.config.estoqueAtual)}
                       </span>{' '}
                       {formatUnit(item.record.unidadeComercial, item.config.estoqueAtual)}
+                      {' | '}
+                      <span
+                        className={`font-num ${
+                          stockSortMode === 'dias'
+                            ? 'font-bold text-[#1D4ED8] dark:text-blue-300'
+                            : 'font-semibold text-[#334155] dark:text-slate-300'
+                        }`}
+                      >
+                        {item.diasQueDura >= 999
+                          ? 'Sem giro recente'
+                          : `Dura ${item.diasQueDura} ${item.diasQueDura === 1 ? 'dia' : 'dias'}`}
+                      </span>
                       {stockSortMode === 'valor' && (
                         <span className="font-bold text-[#1D4ED8] dark:text-blue-300 font-num">
                           {' '}· {formatBRLWhole(item.dinheiroParado)}
@@ -347,16 +360,10 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                   <StatusChip status={item.status} />
 
                   <div className="min-w-0 text-right leading-tight">
-                    <div
-                      className={`text-[12px] min-[400px]:text-[12.5px] font-bold font-num ${
-                        stockSortMode === 'dias'
-                          ? 'text-[#1D4ED8] dark:text-blue-300'
-                          : 'text-[#0F172A] dark:text-slate-50'
-                      }`}
-                    >
-                      {item.diasQueDura >= 999
-                        ? 'Sem giro recente'
-                        : `Estoque dura ${item.diasQueDura} ${item.diasQueDura === 1 ? 'dia' : 'dias'}`}
+                    <div className="text-[12px] min-[400px]:text-[12.5px] font-bold font-num text-[#0F172A] dark:text-slate-50">
+                      {item.precoAtual > 0
+                        ? `Preço de Ref.: ${formatBRL(item.precoAtual)}`
+                        : 'Preço de Ref.: A definir'}
                     </div>
                     <div
                       title="Tendência prevista de preço em 45 dias"
