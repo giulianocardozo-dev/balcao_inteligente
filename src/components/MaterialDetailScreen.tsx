@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   Calculator,
   Check,
-  Copy,
   ExternalLink,
   Minus,
   Newspaper,
@@ -73,6 +72,9 @@ export function MaterialDetailScreen({
 
     setCopiedMsg(text);
     window.setTimeout(() => setCopiedMsg(null), 4000);
+
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const stepAmount = (val: number) => (val >= 500 ? 50 : val >= 100 ? 10 : val >= 20 ? 5 : 1);
@@ -422,7 +424,7 @@ export function MaterialDetailScreen({
           >
             <Check className="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true" />
             <div>
-              <div>Pedido copiado! Cole no WhatsApp do fornecedor:</div>
+              <div>Pedido pronto! Redirecionando para o WhatsApp:</div>
               <div className="text-[14px] font-medium text-[#0F172A] dark:text-slate-100 mt-1">
                 "{copiedMsg}"
               </div>
@@ -433,10 +435,10 @@ export function MaterialDetailScreen({
         <button
           type="button"
           onClick={handleCopyWhatsApp}
-          className="w-full min-h-[52px] px-4 py-3 rounded-2xl bg-[#15803D] hover:bg-[#166534] dark:bg-emerald-600 dark:hover:bg-emerald-500 active:scale-[0.99] text-white font-extrabold text-[17px] flex items-center justify-center gap-2.5 transition-transform"
+          className="w-full min-h-[52px] px-4 py-3 rounded-2xl bg-[#2AB318] hover:bg-[#249c14] dark:bg-[#2AB318] dark:hover:bg-[#249c14] active:scale-[0.99] text-white font-extrabold text-[17px] flex items-center justify-center gap-2.5 transition-transform shadow-md"
         >
-          <Copy className="w-5 h-5 shrink-0" aria-hidden="true" />
-          <span>Copiar pedido pro WhatsApp</span>
+          <img src="/assets/aistudio/WA_801d73ea.png" alt="WhatsApp" className="w-6 h-6 shrink-0 rounded-sm object-contain" />
+          <span>Enviar pedido pro WhatsApp</span>
         </button>
 
         <button
