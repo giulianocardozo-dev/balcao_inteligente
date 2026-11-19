@@ -548,7 +548,7 @@ export default function App() {
               </div>
             ) : (
               <img
-                src="/assets/aistudio/_cone_BI_em_Bloco_de_Bet_o_6a6c26ff.png"
+                src="/assets/aistudio/icon-512_ff246861.png"
                 alt="Balcão Inteligente"
                 referrerPolicy="no-referrer"
                 onError={() => setIconError(true)}
