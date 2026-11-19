@@ -317,6 +317,264 @@ function matchGroundingUrl(
   return bestScore >= 2 ? bestUri : null;
 }
 
+function decodeXmlEntities(text: string): string {
+  return text
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;|&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_m, dec) => String.fromCharCode(Number(dec)))
+    .replace(/&#x([0-9a-f]+);/gi, (_m, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const RSS_CATEGORY_QUERIES: Array<{
+  categoria: NewsCategory;
+  query: string;
+  requiredTerms: string[];
+}> = [
+  {
+    categoria: 'aco',
+    query: '(vergalhão OR "aço longo" OR siderurgia OR Usiminas OR Gerdau) (preço OR alta OR queda OR importação OR aço) when:30d',
+    requiredTerms: ['aco', 'aço', 'vergalh', 'siderurg', 'usiminas', 'gerdau', 'minerio', 'minério'],
+  },
+  {
+    categoria: 'cimento',
+    query: '(cimento OR argamassa OR clínquer OR SNIC) (preço OR venda OR custo OR produção) when:30d',
+    requiredTerms: ['cimento', 'argamassa', 'clinquer', 'clínquer', 'snic'],
+  },
+  {
+    categoria: 'agregados',
+    query: '("frete rodoviário" OR "óleo diesel" OR areia OR brita OR agregados) (preço OR alta OR queda OR transporte) when:30d',
+    requiredTerms: ['frete', 'diesel', 'areia', 'brita', 'agregad', 'transporte rodovi'],
+  },
+  {
+    categoria: 'ceramica',
+    query: '("materiais de construção" OR Abramat OR "bloco cerâmico" OR "cerâmica vermelha") (venda OR preço OR custo OR construção) when:30d',
+    requiredTerms: ['abramat', 'materiais de constru', 'material de constru', 'ceram', 'cerâm', 'bloco'],
+  },
+  {
+    categoria: 'tintas',
+    query: '("tintas imobiliárias" OR Abrafati OR "tinta acrílica" OR "dióxido de titânio") when:30d',
+    requiredTerms: ['tinta', 'tintas', 'abrafati', 'acrilica', 'acrílica', 'titanio', 'titânio'],
+  },
+  {
+    categoria: 'pvc',
+    query: '("resina PVC" OR "tubos e conexões" OR petroquímica OR Braskem OR petróleo) (preço OR alta OR queda OR venda) when:30d',
+    requiredTerms: ['pvc', 'petroquim', 'petroquím', 'braskem', 'petroleo', 'petróleo', 'tubos'],
+  },
+  {
+    categoria: 'eletrica',
+    query: '("preço do cobre" OR "cotação do cobre" OR "cabos elétricos" OR "fios elétricos" OR "preço do alumínio") (alta OR queda OR mercado OR indústria) when:30d',
+    requiredTerms: ['cabos', 'cabo ', 'fios ', 'aluminio', 'alumínio', 'do cobre', 'de cobre', 'condutor', 'commodities'],
+  },
+];
+
+const NOISE_PHRASES = [
+  'jato de tinta', 'impressora', 'tatuagem', 'caneta', 'latinhas', 'refrigerante', 'cerveja', 'futebol', 'novela', 'bbb', 'homicidio', 'homicídio', 'caixa de gordura', 'ministerio da saude do peru', 'ministério da saúde do peru', 'contrata', 'vaga de', 'vagas de', 'vagas em', 'empregos', 'processo seletivo', 'operador(a)', 'estagio', 'estágio', 'não cobre', 'nao cobre', 'banana', 'quadrilha', 'furto', 'roubo', 'corrida do aço', 'alimentos', 'charretes', 'tapete de areia', 'estiagem', 'sargaço', 'cadivi',
+];
+
+const MARKET_RELEVANCE_TERMS = [
+  'preço', 'preco', 'custo', 'venda', 'alta', 'queda', 'recua', 'sobe', 'cai', 'mercado', 'indústria', 'industria', 'produção', 'producao', 'importa', 'tarifa', 'abramat', 'anamaco', 'abrafati', 'snic', 'frete', 'diesel', 'construção', 'construcao', 'petróleo', 'petroleo', 'cotação', 'cotacao', 'lucro', 'operação', 'operacao', 'demanda', 'oferta', 'bilhões', 'bilhoes', 'milhões', 'milhoes',
+];
+
+function isRelevantNewsTitle(title: string, requiredTerms: string[]): boolean {
+  const lower = title.toLowerCase();
+  if (isExcludedContent(lower)) return false;
+  if (NOISE_PHRASES.some((phrase) => lower.includes(phrase))) return false;
+  return (
+    requiredTerms.some((term) => lower.includes(term)) &&
+    MARKET_RELEVANCE_TERMS.some((term) => lower.includes(term))
+  );
+}
+
+function classifyRssSignal(title: string): {
+  sinal: NewsSignal;
+  sinalLabel: string;
+  destaqueCor: 'amarelo' | 'azul';
+} {
+  const lower = title.toLowerCase();
+  const hasUp = /\b(alta|sobe|subiu|subiram|dispara|disparam|aumento|aumenta|eleva|elevam|encarece|press[aã]o|avan[cç]a|reajuste|tarifa)\b/.test(lower);
+  const hasDown = /\b(queda|cai|caiu|caem|recua|recuo|desaba|al[ií]vio|redu[cç][aã]o|barateia|baixa|derrete)\b/.test(lower);
+  const hasWarn = /\b(alerta|risco|incerteza|revis[aã]o|importad|custo|d[ií]vida|desafio|escassez|greve|preocupa)\b/.test(lower);
+
+  if (hasUp && !hasDown) {
+    return { sinal: 'ALTA', sinalLabel: 'Pressão de Alta', destaqueCor: 'amarelo' };
+  }
+  if (hasDown && !hasUp) {
+    return { sinal: 'QUEDA', sinalLabel: 'Alívio de Custo', destaqueCor: 'azul' };
+  }
+  if (hasWarn || (hasUp && hasDown)) {
+    return { sinal: 'ATENCAO', sinalLabel: 'Atenção no Mercado', destaqueCor: 'amarelo' };
+  }
+  return { sinal: 'ESTAVEL', sinalLabel: 'Mercado Estável', destaqueCor: 'azul' };
+}
+
+function buildRssTriggers(title: string, materialNome: string, categoria: NewsCategory): string {
+  const lower = title.toLowerCase();
+  const tags: string[] = [];
+  if (lower.includes('diesel') || lower.includes('frete')) tags.push('Frete e diesel');
+  if (lower.includes('petróleo') || lower.includes('petroleo')) tags.push('Petróleo e resina');
+  if (lower.includes('import')) tags.push('Produto importado');
+  if (lower.includes('cobre') || lower.includes('alumínio') || lower.includes('aluminio')) tags.push('Metais condutores');
+  if (lower.includes('minério') || lower.includes('minerio') || lower.includes('aço')) tags.push('Cadeia do aço');
+  if (lower.includes('energia') || lower.includes('luz')) tags.push('Custo de energia');
+  if (lower.includes('abramat') || lower.includes('construção')) tags.push('Demanda da construção');
+
+  if (tags.length >= 2) return tags.slice(0, 3).join(' · ');
+
+  const fallbackByCat: Record<NewsCategory, string> = {
+    aco: `${materialNome} · Siderurgia e custo do aço`,
+    cimento: `${materialNome} · Produção e demanda de cimento`,
+    agregados: `${materialNome} · Frete rodoviário e diesel`,
+    ceramica: `${materialNome} · Demanda do varejo da construção`,
+    tintas: `${materialNome} · Insumos e linha imobiliária`,
+    pvc: `${materialNome} · Cadeia petroquímica e resina PVC`,
+    eletrica: `${materialNome} · Cotação de metais condutores`,
+  };
+  return tags.length === 1 ? `${tags[0]} · ${materialNome}` : fallbackByCat[categoria];
+}
+
+function resolveMaterialForRss(categoria: NewsCategory, title: string) {
+  const lower = title.toLowerCase();
+  if (categoria === 'cimento' && lower.includes('argamassa')) {
+    return TRACKED_MATERIALS.find((m) => m.materialId === '00001381')!;
+  }
+  if (categoria === 'agregados' && lower.includes('brita')) {
+    return TRACKED_MATERIALS.find((m) => m.materialId === '00004721')!;
+  }
+  return (
+    TRACKED_MATERIALS.find((m) => m.categoria === categoria) ??
+    resolveMaterialTarget('', categoria, title)
+  );
+}
+
+async function fetchWebNewsFromRss(): Promise<NewsCacheEntry> {
+  const now = new Date();
+  const nowMs = now.getTime();
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+
+  const perCategoryItems = await Promise.all(
+    RSS_CATEGORY_QUERIES.map(async ({ categoria, query, requiredTerms }) => {
+      const url = `https://news.google.com/rss/search?q=${encodeURIComponent(
+        query
+      )}&hl=pt-BR&gl=BR&ceid=BR:pt-419`;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      try {
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; BalcaoInteligente/1.0)',
+          },
+          signal: controller.signal,
+        });
+        if (!res.ok) return [] as NormalizedNewsItem[];
+        const xml = await res.text();
+        const rawItems = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+        const parsedForCategory: NormalizedNewsItem[] = [];
+
+        for (const match of rawItems) {
+          const block = match[1];
+          const rawTitle = decodeXmlEntities(
+            block.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? ''
+          );
+          const rawLink = decodeXmlEntities(
+            block.match(/<link>([\s\S]*?)<\/link>/)?.[1] ?? ''
+          );
+          const rawPubDate = decodeXmlEntities(
+            block.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] ?? ''
+          );
+          const rawSource = decodeXmlEntities(
+            block.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1] ?? ''
+          );
+
+          if (!rawTitle || !isValidArticleUrl(rawLink)) continue;
+
+          const fonte = rawSource || 'Google Notícias';
+          const suffix = ` - ${fonte}`;
+          const titulo = rawTitle.endsWith(suffix)
+            ? rawTitle.slice(0, -suffix.length).trim()
+            : rawTitle;
+
+          if (!titulo || !isRelevantNewsTitle(titulo, requiredTerms)) continue;
+
+          const pubMs = Date.parse(rawPubDate);
+          if (Number.isNaN(pubMs)) continue;
+          if (pubMs > nowMs + 10 * 60 * 1000 || nowMs - pubMs > thirtyDaysMs) continue;
+
+          const publishedAt = new Date(Math.min(pubMs, nowMs)).toISOString();
+          const target = resolveMaterialForRss(categoria, titulo);
+          const { sinal, sinalLabel, destaqueCor } = classifyRssSignal(titulo);
+          const gatilhos = buildRssTriggers(titulo, target.materialNome, categoria);
+
+          parsedForCategory.push({
+            id: `rss-news-${target.materialId}-${pubMs}-${parsedForCategory.length}`,
+            materialId: target.materialId,
+            materialNome: target.materialNome,
+            ncm: target.ncm,
+            categoria: target.categoria,
+            fonte,
+            articleUrl: rawLink,
+            publishedAt,
+            ordemRecencia: 0,
+            sinal,
+            sinalLabel,
+            titulo,
+            gatilhos,
+            impactoBalcao: gatilhos,
+            destaqueCor,
+          });
+        }
+
+        parsedForCategory.sort(
+          (a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)
+        );
+        return parsedForCategory.slice(0, 3);
+      } catch {
+        return [] as NormalizedNewsItem[];
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    })
+  );
+
+  const seenUrls = new Set<string>();
+  const seenTitles = new Set<string>();
+  const merged: NormalizedNewsItem[] = [];
+
+  for (const group of perCategoryItems) {
+    for (const item of group) {
+      const titleKey = item.titulo.toLowerCase();
+      if (seenUrls.has(item.articleUrl) || seenTitles.has(titleKey)) continue;
+      seenUrls.add(item.articleUrl);
+      seenTitles.add(titleKey);
+      merged.push(item);
+    }
+  }
+
+  if (merged.length === 0) {
+    throw new Error('Nenhuma notícia recente encontrada nas fontes RSS no momento.');
+  }
+
+  merged.sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+  const finalItems = merged.slice(0, 15).map((item, idx) => ({
+    ...item,
+    ordemRecencia: idx + 1,
+  }));
+
+  return {
+    updatedAtIso: now.toISOString(),
+    fetchedAtMs: now.getTime(),
+    items: finalItems,
+  };
+}
+
 async function fetchSmartWebNewsFromGemini(): Promise<NewsCacheEntry> {
   const ai = getGeminiClient();
   const now = new Date();
@@ -360,7 +618,7 @@ REGRAS CRÍTICAS:
 
   const modelAttempts: Array<{ model: string; useThinking: boolean }> = [
     { model: 'gemini-4-hydrogen', useThinking: true },
-    { model: 'gemini-2.5-flash', useThinking: false },
+    { model: 'gemini-3.8-flash', useThinking: false },
   ];
 
   let lastError: unknown = null;
@@ -513,7 +771,7 @@ async function getLatestNews(forceRefresh: boolean): Promise<NewsCacheEntry> {
 
   if (!forceRefresh && nowMs < newsCooldownUntilMs) {
     if (newsCache) return newsCache;
-    throw new Error('Limite temporário atingido. Tente novamente mais tarde.');
+    throw new Error('Houve um problema na atualização. Exibindo as últimas notícias salvas');
   }
 
   if (inFlightNewsFetch) {
@@ -528,8 +786,7 @@ async function getLatestNews(forceRefresh: boolean): Promise<NewsCacheEntry> {
     })
     .catch((err) => {
       newsCooldownUntilMs = Date.now() + NEWS_COOLDOWN_MS;
-      const msg = err instanceof Error ? err.message : String(err);
-      console.warn('News web sync fallback active:', msg);
+      console.warn('Gemini web news sync failed:', err);
       if (newsCache) return newsCache;
       throw err;
     })
@@ -624,47 +881,28 @@ async function startServer() {
     }
   });
 
-  app.get('/api/news', async (_req: Request, res: Response) => {
+  app.get('/api/news', async (req: Request, res: Response) => {
     try {
-      const entry = await getLatestNews(false);
+      const force = req.query.force === '1';
+      const entry = await getLatestNews(force);
       res.setHeader('Cache-Control', 'no-store');
       res.json({
         ok: true,
-        source: 'gemini-web-search',
+        source: 'smart-web-news',
         updatedAtIso: entry.updatedAtIso,
         items: entry.items,
       });
     } catch (err) {
-      const rawMessage =
-        err instanceof Error
-          ? err.message
-          : 'Erro ao atualizar notícias via busca inteligente.';
       const status =
         typeof (err as { status?: unknown })?.status === 'number'
           ? (err as { status: number }).status
           : typeof (err as { statusCode?: unknown })?.statusCode === 'number'
             ? (err as { statusCode: number }).statusCode
-            : 502;
+            : 429;
 
-      let friendlyMessage = rawMessage;
-      if (status === 429 || rawMessage.includes('RESOURCE_EXHAUSTED')) {
-        friendlyMessage =
-          'Limite temporário de consultas da busca inteligente atingido (429). Verifique a cota/chave em Settings > Secrets; exibindo as notícias salvas.';
-      } else if (
-        status === 403 ||
-        rawMessage.includes('PERMISSION_DENIED') ||
-        rawMessage.includes('API_KEY_INVALID')
-      ) {
-        friendlyMessage =
-          'Chave da busca inteligente inválida ou sem permissão. Verifique em Settings > Secrets.';
-      } else if (rawMessage.trim().startsWith('{')) {
-        friendlyMessage =
-          'Não foi possível concluir a busca inteligente na web agora. Exibindo as notícias salvas.';
-      }
-
-      res.status(status >= 400 && status < 600 ? status : 502).json({
+      res.status(status >= 400 && status < 600 ? status : 429).json({
         ok: false,
-        error: friendlyMessage,
+        error: 'Houve um problema na atualização. Exibindo as últimas notícias salvas',
       });
     }
   });

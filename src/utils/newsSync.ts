@@ -42,7 +42,7 @@ export function readCachedNews(): CachedNewsData | null {
     const parsed = JSON.parse(raw) as MarketNewsItem[];
     if (!Array.isArray(parsed) || parsed.length === 0) return null;
 
-    if (parsed.some((item) => item.id && item.id.startsWith('rss-news-'))) {
+    if (parsed.some((item) => item.id && (item.id.startsWith('rss-news-') || item.id.startsWith('web-news-')))) {
       localStorage.removeItem(NEWS_STORAGE_KEYS.ITEMS);
       localStorage.removeItem(NEWS_STORAGE_KEYS.UPDATED_AT);
       return null;
@@ -120,14 +120,8 @@ export async function fetchSmartWebNews(options?: {
         ok: false,
         error:
           payload?.error ||
-          'Não foi possível buscar notícias atualizadas na web no momento.',
+          'Houve um problema na atualização. Exibindo as últimas notícias salvas',
       };
-    }
-
-    if (payload.items.length === 0 && payload.degraded) {
-      const existing = getInitialNewsItems();
-      const cachedAt = readCachedNews()?.updatedAtIso ?? new Date().toISOString();
-      return { ok: true, items: existing, updatedAtIso: cachedAt };
     }
 
     const clean = sanitizeNewsItems(payload.items);
@@ -139,7 +133,7 @@ export async function fetchSmartWebNews(options?: {
       }
       return {
         ok: false,
-        error: 'Nenhuma notícia recente válida encontrada na busca web.',
+        error: 'Houve um problema na atualização. Exibindo as últimas notícias salvas',
       };
     }
 
@@ -152,7 +146,7 @@ export async function fetchSmartWebNews(options?: {
     }
     return {
       ok: false,
-      error: 'Falha de conexão ao buscar notícias atualizadas na web.',
+      error: 'Houve um problema na atualização. Exibindo as últimas notícias salvas',
     };
   }
 }
