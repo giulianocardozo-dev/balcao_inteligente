@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { SubscriptionPlanId, UserProfile } from '../types/inventory';
 import { formatSyncTimestamp } from '../utils/forecastSync';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface PlanOption {
   id: SubscriptionPlanId;
@@ -279,6 +280,9 @@ export function SettingsScreen({
           </button>
         </div>
       </section>
+
+      {/* Instalar aplicativo (Android, iOS e Windows) */}
+      <PWAInstallButton variant="settings" />
 
       {/* Seção 3: Plano de Assinatura (Futuro) */}
       <section

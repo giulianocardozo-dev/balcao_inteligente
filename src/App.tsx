@@ -17,6 +17,8 @@ import {
 } from './data/defaultDataset';
 import { MarketNewsScreen } from './components/MarketNewsScreen';
 import { MaterialDetailScreen } from './components/MaterialDetailScreen';
+import { OfflineIndicator } from './components/OfflineIndicator';
+import { PWAInstallButton } from './components/PWAInstallButton';
 import { SettingsScreen } from './components/SettingsScreen';
 import { SimulateScreen } from './components/SimulateScreen';
 import { TodayScreen } from './components/TodayScreen';
@@ -579,10 +581,13 @@ export default function App() {
         {/* Main Scrollable Content */}
         <main className="flex-1 px-4 pt-4 pb-24">
           {activeTab === 'hoje' && (
-            <TodayScreen
-              items={evaluatedItems}
-              onSelectMaterial={openMaterialDetail}
-            />
+            <>
+              <PWAInstallButton variant="banner" />
+              <TodayScreen
+                items={evaluatedItems}
+                onSelectMaterial={openMaterialDetail}
+              />
+            </>
           )}
 
           {activeTab === 'detalhe' && activeMaterial && (
@@ -638,6 +643,8 @@ export default function App() {
             />
           )}
         </main>
+
+        <OfflineIndicator />
 
         {/* Fixed Bottom Navigation */}
         <nav
