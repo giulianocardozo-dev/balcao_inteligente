@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import type { Request, Response } from 'express';
 import fs from 'node:fs';
+import http from 'node:http';
 import path from 'node:path';
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 
@@ -903,10 +904,20 @@ async function startServer() {
     }
   });
 
+  const httpServer = http.createServer(app);
+
   if (process.env.NODE_ENV !== 'production') {
+    if (process.env.DISABLE_HMR === undefined) {
+      process.env.DISABLE_HMR = 'true';
+    }
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: false,
+        allowedHosts: true,
+        ws: { server: httpServer },
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -923,7 +934,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Balcão Inteligente server running on http://0.0.0.0:${PORT}`);
   });
 }
