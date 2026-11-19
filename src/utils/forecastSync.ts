@@ -109,7 +109,7 @@ export async function fetchGitHubForecast(
   }
 
   try {
-    const res = await fetch(GITHUB_FORECAST_RAW_URL, {
+    const res = await fetch('/api/forecast', {
       method: 'GET',
       cache: 'no-store',
       signal,
@@ -119,13 +119,19 @@ export async function fetchGitHubForecast(
       return { ok: false, reason: 'http' };
     }
 
+    const headerSource = res.headers.get('X-Forecast-Source');
+    const headerUpdatedAt = res.headers.get('X-Forecast-Updated-At');
     const buffer = await res.arrayBuffer();
     const parsed = parseSinapiWorkbook(buffer);
     const nowIso = new Date().toISOString();
+    const updatedAtIso =
+      headerUpdatedAt && !Number.isNaN(Date.parse(headerUpdatedAt))
+        ? headerUpdatedAt
+        : nowIso;
 
     const syncState: ForecastSyncState = {
-      source: 'github',
-      updatedAtIso: nowIso,
+      source: headerSource === 'github' ? 'github' : 'cache',
+      updatedAtIso,
       lastCheckedIso: nowIso,
       materialCount: parsed.materialCount,
       ufCount: parsed.ufs.length,

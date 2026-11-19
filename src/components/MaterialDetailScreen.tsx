@@ -376,7 +376,7 @@ export function MaterialDetailScreen({
               aria-describedby="edit-custo-medio-help"
               type="number"
               min={0}
-              step="0.10"
+              step="0.01"
               inputMode="decimal"
               value={config.custoMedio}
               onFocus={(e) => e.target.select()}

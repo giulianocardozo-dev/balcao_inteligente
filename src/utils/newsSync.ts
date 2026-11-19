@@ -42,6 +42,12 @@ export function readCachedNews(): CachedNewsData | null {
     const parsed = JSON.parse(raw) as MarketNewsItem[];
     if (!Array.isArray(parsed) || parsed.length === 0) return null;
 
+    if (parsed.some((item) => item.id && item.id.startsWith('rss-news-'))) {
+      localStorage.removeItem(NEWS_STORAGE_KEYS.ITEMS);
+      localStorage.removeItem(NEWS_STORAGE_KEYS.UPDATED_AT);
+      return null;
+    }
+
     const clean = sanitizeNewsItems(parsed);
     if (clean.length === 0) return null;
 
@@ -103,6 +109,7 @@ export async function fetchSmartWebNews(options?: {
 
     const payload = (await response.json().catch(() => null)) as {
       ok?: boolean;
+      degraded?: boolean;
       items?: MarketNewsItem[];
       updatedAtIso?: string;
       error?: string;
@@ -117,8 +124,19 @@ export async function fetchSmartWebNews(options?: {
       };
     }
 
+    if (payload.items.length === 0 && payload.degraded) {
+      const existing = getInitialNewsItems();
+      const cachedAt = readCachedNews()?.updatedAtIso ?? new Date().toISOString();
+      return { ok: true, items: existing, updatedAtIso: cachedAt };
+    }
+
     const clean = sanitizeNewsItems(payload.items);
     if (clean.length === 0) {
+      const existing = getInitialNewsItems();
+      if (existing.length > 0) {
+        const cachedAt = readCachedNews()?.updatedAtIso ?? new Date().toISOString();
+        return { ok: true, items: existing, updatedAtIso: cachedAt };
+      }
       return {
         ok: false,
         error: 'Nenhuma notícia recente válida encontrada na busca web.',

@@ -10,6 +10,10 @@ import {
   BRAZIL_UFS,
   buildDefaultSinapiDataset,
   buildDefaultStoreConfigs,
+  getInitialConfigForMaterial,
+  getSeedConfigByIdOrRecord,
+  isLegacyDefaultSales,
+  isLegacyDefaultStock,
 } from './data/defaultDataset';
 import { MarketNewsScreen } from './components/MarketNewsScreen';
 import { MaterialDetailScreen } from './components/MaterialDetailScreen';
@@ -44,7 +48,9 @@ import { detectUfFromCoordinates } from './utils/ufGeolocation';
 const STORAGE_KEYS = {
   UF: 'balcao_inteligente_uf_v1',
   UF_MANUAL: 'balcao_inteligente_uf_manual_v1',
-  CONFIGS: 'balcao_inteligente_configs_v2',
+  CONFIGS: 'balcao_inteligente_configs_v4',
+  LEGACY_CONFIGS_V3: 'balcao_inteligente_configs_v3',
+  LEGACY_CONFIGS_V2: 'balcao_inteligente_configs_v2',
   THEME: 'balcao_inteligente_theme_v1',
   PROFILE: 'balcao_inteligente_profile_v1',
 };
@@ -91,10 +97,51 @@ export default function App() {
     ...(safeReadJson<Partial<UserProfile>>(STORAGE_KEYS.PROFILE) ?? {}),
   }));
   const [storeConfigs, setStoreConfigs] = useState<Record<string, StoreInventoryConfig>>(
-    () => ({
-      ...defaultConfigs,
-      ...(safeReadJson<Record<string, StoreInventoryConfig>>(STORAGE_KEYS.CONFIGS) ?? {}),
-    })
+    () => {
+      const savedV4 = safeReadJson<Record<string, StoreInventoryConfig>>(STORAGE_KEYS.CONFIGS);
+      if (savedV4) {
+        return {
+          ...defaultConfigs,
+          ...savedV4,
+        };
+      }
+
+      const initialRecords = initialCachedForecast?.records ?? defaultDataset;
+      const seeded: Record<string, StoreInventoryConfig> = { ...defaultConfigs };
+      for (const rec of initialRecords) {
+        if (!seeded[rec.id]) {
+          seeded[rec.id] = getInitialConfigForMaterial(rec);
+        }
+      }
+
+      const legacyConfigs =
+        safeReadJson<Record<string, StoreInventoryConfig>>(STORAGE_KEYS.LEGACY_CONFIGS_V3) ??
+        safeReadJson<Record<string, StoreInventoryConfig>>(STORAGE_KEYS.LEGACY_CONFIGS_V2);
+
+      if (legacyConfigs) {
+        for (const [id, legacyCfg] of Object.entries(legacyConfigs)) {
+          const rec = initialRecords.find((r) => r.id === id);
+          const fallbackCfg = seeded[id] ?? getSeedConfigByIdOrRecord(id, rec);
+          const useNewStock =
+            fallbackCfg !== undefined && isLegacyDefaultStock(id, legacyCfg.estoqueAtual);
+          const useNewSales =
+            fallbackCfg !== undefined && isLegacyDefaultSales(id, legacyCfg.vendas30d);
+
+          seeded[id] = {
+            ...(fallbackCfg ?? legacyCfg),
+            ...legacyCfg,
+            estoqueAtual: useNewStock ? fallbackCfg.estoqueAtual : legacyCfg.estoqueAtual,
+            vendas30d: useNewSales ? fallbackCfg.vendas30d : legacyCfg.vendas30d,
+            custoMedio:
+              legacyCfg.custoMedio > 0
+                ? legacyCfg.custoMedio
+                : fallbackCfg?.custoMedio ?? 0,
+          };
+        }
+      }
+
+      return seeded;
+    }
   );
   const [selectedUf, setSelectedUf] = useState<string>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.UF);
@@ -413,13 +460,7 @@ export default function App() {
     return ufRecords
       .map((rec) => {
         const existingCfg = storeConfigs[rec.id];
-        const cfg: StoreInventoryConfig = existingCfg ?? {
-          estoqueAtual: 60,
-          vendas30d: 120,
-          diasEntrega: 5,
-          custoMedio: 0,
-          variacaoDemanda: 0.25,
-        };
+        const cfg: StoreInventoryConfig = existingCfg ?? getInitialConfigForMaterial(rec);
         return evaluateMaterial(rec, cfg);
       })
       .sort((a, b) => {
@@ -449,14 +490,19 @@ export default function App() {
     materialId: string,
     patch: Partial<StoreInventoryConfig>
   ) => {
+    const targetRecord = ufRecords.find((r) => r.id === materialId);
     setStoreConfigs((prev) => {
-      const current = prev[materialId] ?? {
-        estoqueAtual: 60,
-        vendas30d: 120,
-        diasEntrega: 5,
-        custoMedio: 0,
-        variacaoDemanda: 0.25,
-      };
+      const current =
+        prev[materialId] ??
+        (targetRecord
+          ? getInitialConfigForMaterial(targetRecord)
+          : {
+              estoqueAtual: 60,
+              vendas30d: 120,
+              diasEntrega: 5,
+              custoMedio: 0,
+              variacaoDemanda: 0.25,
+            });
       return {
         ...prev,
         [materialId]: {

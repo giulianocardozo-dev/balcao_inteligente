@@ -396,7 +396,7 @@ export function SimulateScreen({
                   id="sim-preco-cotado"
                   type="number"
                   min={0}
-                  step="0.10"
+                  step="0.01"
                   inputMode="decimal"
                   value={precoCotado}
                   onFocus={(e) => e.target.select()}

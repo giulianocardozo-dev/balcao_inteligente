@@ -42,7 +42,15 @@ interface NewsCacheEntry {
 
 const PORT = Number(process.env.PORT) || 3000;
 const NEWS_CACHE_TTL_MS = 4 * 60 * 60 * 1000; // 4 horas
+const NEWS_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutos entre retentativas após erro/cota
+const FORECAST_CACHE_TTL_MS = 8 * 60 * 60 * 1000; // 8 horas
 const SAO_PAULO_TZ = 'America/Sao_Paulo';
+const GITHUB_FORECAST_RAW_URL =
+  'https://raw.githubusercontent.com/giulianocardozo-dev/balcao_inteligente/main/balcao%20inteligente%20181126%20projecao.xlsx';
+const LOCAL_FORECAST_XLSX_PATH = path.resolve(
+  process.cwd(),
+  'balcao inteligente 181126 projecao.xlsx'
+);
 
 const TRACKED_MATERIALS: Array<{
   materialId: string;
@@ -116,9 +124,19 @@ const TRACKED_MATERIALS: Array<{
   },
 ];
 
+interface ForecastCacheEntry {
+  buffer: Buffer;
+  source: 'github' | 'local';
+  updatedAtIso: string;
+  fetchedAtMs: number;
+}
+
 let aiClient: GoogleGenAI | null = null;
 let newsCache: NewsCacheEntry | null = null;
+let newsCooldownUntilMs = 0;
 let inFlightNewsFetch: Promise<NewsCacheEntry> | null = null;
+let forecastCache: ForecastCacheEntry | null = null;
+let inFlightForecastFetch: Promise<ForecastCacheEntry> | null = null;
 
 function getGeminiClient(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -222,7 +240,6 @@ function normalizePublishedAt(raw: unknown, now: Date): string | null {
   if (Number.isNaN(ms)) return null;
 
   const nowMs = now.getTime();
-  // Rejeita datas futuras (> 10 min de folga) ou mais antigas que 30 dias
   if (ms > nowMs + 10 * 60 * 1000) {
     return null;
   }
@@ -341,15 +358,22 @@ REGRAS CRÍTICAS:
   ]
 }`;
 
+  const modelAttempts: Array<{ model: string; useThinking: boolean }> = [
+    { model: 'gemini-4-hydrogen', useThinking: true },
+    { model: 'gemini-2.5-flash', useThinking: false },
+  ];
+
   let lastError: unknown = null;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (const attemptCfg of modelAttempts) {
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-4-hydrogen',
+        model: attemptCfg.model,
         contents: prompt,
         config: {
           tools: [{ googleSearch: {} }],
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          ...(attemptCfg.useThinking
+            ? { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } }
+            : {}),
           systemInstruction:
             'Retorne apenas JSON válido sem texto fora do objeto JSON. Utilize apenas URLs reais de notícias obtidas pela busca web.',
         },
@@ -469,9 +493,6 @@ REGRAS CRÍTICAS:
       if ((err as Error & { statusCode?: number })?.statusCode === 500) {
         throw err;
       }
-      if (attempt === 0) {
-        await new Promise((resolve) => setTimeout(resolve, 600));
-      }
     }
   }
 
@@ -490,6 +511,11 @@ async function getLatestNews(forceRefresh: boolean): Promise<NewsCacheEntry> {
     return newsCache;
   }
 
+  if (!forceRefresh && nowMs < newsCooldownUntilMs) {
+    if (newsCache) return newsCache;
+    throw new Error('Limite temporário atingido. Tente novamente mais tarde.');
+  }
+
   if (inFlightNewsFetch) {
     return inFlightNewsFetch;
   }
@@ -497,7 +523,15 @@ async function getLatestNews(forceRefresh: boolean): Promise<NewsCacheEntry> {
   inFlightNewsFetch = fetchSmartWebNewsFromGemini()
     .then((entry) => {
       newsCache = entry;
+      newsCooldownUntilMs = 0;
       return entry;
+    })
+    .catch((err) => {
+      newsCooldownUntilMs = Date.now() + NEWS_COOLDOWN_MS;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn('News web sync fallback active:', msg);
+      if (newsCache) return newsCache;
+      throw err;
     })
     .finally(() => {
       inFlightNewsFetch = null;
@@ -506,9 +540,89 @@ async function getLatestNews(forceRefresh: boolean): Promise<NewsCacheEntry> {
   return inFlightNewsFetch;
 }
 
+async function loadForecastWorkbook(): Promise<ForecastCacheEntry> {
+  const nowMs = Date.now();
+  if (forecastCache && nowMs - forecastCache.fetchedAtMs < FORECAST_CACHE_TTL_MS) {
+    return forecastCache;
+  }
+
+  if (inFlightForecastFetch) {
+    return inFlightForecastFetch;
+  }
+
+  inFlightForecastFetch = (async () => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      try {
+        const res = await fetch(GITHUB_FORECAST_RAW_URL, {
+          method: 'GET',
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        if (res.ok) {
+          const arrayBuf = await res.arrayBuffer();
+          const buffer = Buffer.from(arrayBuf);
+          if (buffer.byteLength > 0) {
+            const entry: ForecastCacheEntry = {
+              buffer,
+              source: 'github',
+              updatedAtIso: new Date().toISOString(),
+              fetchedAtMs: Date.now(),
+            };
+            forecastCache = entry;
+            return entry;
+          }
+        }
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    } catch {
+      // Fallback transparently to bundled local workbook below
+    }
+
+    const [buffer, stat] = await Promise.all([
+      fs.promises.readFile(LOCAL_FORECAST_XLSX_PATH),
+      fs.promises.stat(LOCAL_FORECAST_XLSX_PATH),
+    ]);
+    const entry: ForecastCacheEntry = {
+      buffer,
+      source: 'local',
+      updatedAtIso: stat.mtime.toISOString(),
+      fetchedAtMs: Date.now(),
+    };
+    forecastCache = entry;
+    return entry;
+  })().finally(() => {
+    inFlightForecastFetch = null;
+  });
+
+  return inFlightForecastFetch;
+}
+
 async function startServer() {
   const app = express();
   app.use(express.json());
+
+  app.get('/api/forecast', async (_req: Request, res: Response) => {
+    try {
+      const entry = await loadForecastWorkbook();
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader('X-Forecast-Source', entry.source);
+      res.setHeader('X-Forecast-Updated-At', entry.updatedAtIso);
+      res.send(entry.buffer);
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Planilha de projeções não encontrada no servidor.';
+      res.status(500).json({ ok: false, error: msg });
+    }
+  });
 
   app.get('/api/news', async (_req: Request, res: Response) => {
     try {

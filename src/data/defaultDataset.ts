@@ -71,7 +71,7 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
   {
     codigoSinapi: '00000033',
     insumo: 'Vergalhão CA-50 10 mm',
-    unidadeComercial: 'barra 12m',
+    unidadeComercial: 'kg',
     localArmazenamento: 'patio',
     precoBaseSP: 58.9,
     var1: 0.031,
@@ -80,17 +80,17 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     drift36m: 0.14,
     waveAmp: 0.032,
     defaultStore: {
-      estoqueAtual: 110,
-      vendas30d: 600,
+      estoqueAtual: 1111,
+      vendas30d: 1333,
       diasEntrega: 6,
-      custoMedio: 0,
+      custoMedio: 8.09,
       variacaoDemanda: 0.25,
     },
   },
   {
     codigoSinapi: '00001379',
     insumo: 'Cimento CP II 50 kg',
-    unidadeComercial: 'saco 50kg',
+    unidadeComercial: 'saco 50 kg',
     localArmazenamento: 'patio',
     precoBaseSP: 36.4,
     var1: 0.026,
@@ -99,10 +99,10 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     drift36m: 0.11,
     waveAmp: 0.022,
     defaultStore: {
-      estoqueAtual: 420,
-      vendas30d: 1200,
+      estoqueAtual: 350,
+      vendas30d: 650,
       diasEntrega: 4,
-      custoMedio: 0,
+      custoMedio: 38.9,
       variacaoDemanda: 0.25,
     },
   },
@@ -118,10 +118,10 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     drift36m: 0.07,
     waveAmp: 0.025,
     defaultStore: {
-      estoqueAtual: 140,
-      vendas30d: 150,
+      estoqueAtual: 20,
+      vendas30d: 50,
       diasEntrega: 3,
-      custoMedio: 0,
+      custoMedio: 215.73,
       variacaoDemanda: 0.25,
     },
   },
@@ -137,17 +137,17 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     drift36m: 0.06,
     waveAmp: 0.021,
     defaultStore: {
-      estoqueAtual: 110,
-      vendas30d: 120,
+      estoqueAtual: 15,
+      vendas30d: 35,
       diasEntrega: 3,
-      custoMedio: 0,
+      custoMedio: 205,
       variacaoDemanda: 0.25,
     },
   },
   {
     codigoSinapi: '00000731',
     insumo: 'Bloco cerâmico 9x19x39',
-    unidadeComercial: 'milheiro',
+    unidadeComercial: 'un',
     localArmazenamento: 'patio',
     precoBaseSP: 1390.0,
     var1: 0.019,
@@ -156,10 +156,10 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     drift36m: 0.12,
     waveAmp: 0.019,
     defaultStore: {
-      estoqueAtual: 12,
-      vendas30d: 18,
+      estoqueAtual: 3000,
+      vendas30d: 4000,
       diasEntrega: 7,
-      custoMedio: 0,
+      custoMedio: 1.63,
       variacaoDemanda: 0.25,
     },
   },
@@ -178,14 +178,14 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
       estoqueAtual: 14,
       vendas30d: 12,
       diasEntrega: 7,
-      custoMedio: 0,
+      custoMedio: 3.2,
       variacaoDemanda: 0.25,
     },
   },
   {
     codigoSinapi: '00001381',
     insumo: 'Argamassa AC-II 20 kg',
-    unidadeComercial: 'saco 20kg',
+    unidadeComercial: 'saco 20 kg',
     localArmazenamento: 'patio',
     precoBaseSP: 24.9,
     var1: 0.018,
@@ -194,17 +194,17 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     drift36m: 0.10,
     waveAmp: 0.018,
     defaultStore: {
-      estoqueAtual: 120,
-      vendas30d: 900,
+      estoqueAtual: 160,
+      vendas30d: 250,
       diasEntrega: 4,
-      custoMedio: 0,
+      custoMedio: 24.9,
       variacaoDemanda: 0.25,
     },
   },
   {
     codigoSinapi: '00007356',
     insumo: 'Tinta acrílica 18 L',
-    unidadeComercial: 'lata 18L',
+    unidadeComercial: 'lata 18 L',
     localArmazenamento: 'prateleira',
     precoBaseSP: 342.0,
     var1: -0.026,
@@ -213,17 +213,17 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     drift36m: 0.05,
     waveAmp: 0.026,
     defaultStore: {
-      estoqueAtual: 56,
-      vendas30d: 60,
+      estoqueAtual: 35,
+      vendas30d: 35,
       diasEntrega: 5,
-      custoMedio: 0,
+      custoMedio: 185.9,
       variacaoDemanda: 0.25,
     },
   },
   {
     codigoSinapi: '00009869',
     insumo: 'Tubo PVC esgoto 100 mm',
-    unidadeComercial: 'barra 6m',
+    unidadeComercial: 'm',
     localArmazenamento: 'prateleira',
     precoBaseSP: 74.5,
     var1: 0.016,
@@ -232,17 +232,17 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     drift36m: 0.11,
     waveAmp: 0.02,
     defaultStore: {
-      estoqueAtual: 96,
-      vendas30d: 180,
+      estoqueAtual: 300,
+      vendas30d: 480,
       diasEntrega: 5,
-      custoMedio: 0,
+      custoMedio: 13.3,
       variacaoDemanda: 0.25,
     },
   },
   {
     codigoSinapi: '00000984',
     insumo: 'Cabo flexível 2,5 mm²',
-    unidadeComercial: 'rolo 100m',
+    unidadeComercial: 'm',
     localArmazenamento: 'prateleira',
     precoBaseSP: 189.0,
     var1: -0.003,
@@ -251,10 +251,10 @@ const MATERIAL_SEEDS: MaterialSeed[] = [
     drift36m: 0.09,
     waveAmp: 0.024,
     defaultStore: {
-      estoqueAtual: 84,
-      vendas30d: 90,
+      estoqueAtual: 2500,
+      vendas30d: 2500,
       diasEntrega: 5,
-      custoMedio: 0,
+      custoMedio: 3.05,
       variacaoDemanda: 0.25,
     },
   },
@@ -335,4 +335,96 @@ export function buildDefaultStoreConfigs(): Record<string, StoreInventoryConfig>
     map[seed.codigoSinapi] = { ...seed.defaultStore };
   }
   return map;
+}
+
+function normalizeMaterialKey(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function getInitialConfigForMaterial(
+  record: Pick<SinapiMaterialRecord, 'id' | 'codigoSinapi' | 'insumo'>
+): StoreInventoryConfig {
+  const normalizedInsumo = normalizeMaterialKey(record.insumo);
+  const seed =
+    MATERIAL_SEEDS.find((s) => s.codigoSinapi === record.codigoSinapi || s.codigoSinapi === record.id) ??
+    MATERIAL_SEEDS.find((s) => normalizeMaterialKey(s.insumo) === normalizedInsumo);
+
+  if (seed) {
+    return { ...seed.defaultStore };
+  }
+
+  return {
+    estoqueAtual: 60,
+    vendas30d: 120,
+    diasEntrega: 5,
+    custoMedio: 0,
+    variacaoDemanda: 0.25,
+  };
+}
+
+const LEGACY_INITIAL_STOCK_SALES: Record<string, { estoqueAtual: number; vendas30d: number }> = {
+  '00000033': { estoqueAtual: 110, vendas30d: 600 },
+  '34': { estoqueAtual: 110, vendas30d: 600 },
+  '00001379': { estoqueAtual: 420, vendas30d: 1200 },
+  '1379': { estoqueAtual: 420, vendas30d: 1200 },
+  '00000370': { estoqueAtual: 140, vendas30d: 150 },
+  '370': { estoqueAtual: 140, vendas30d: 150 },
+  '00004721': { estoqueAtual: 110, vendas30d: 120 },
+  '4721': { estoqueAtual: 110, vendas30d: 120 },
+  '00000731': { estoqueAtual: 12, vendas30d: 18 },
+  '44457': { estoqueAtual: 12, vendas30d: 18 },
+  '00001381': { estoqueAtual: 120, vendas30d: 900 },
+  '34353': { estoqueAtual: 120, vendas30d: 900 },
+  '00007356': { estoqueAtual: 56, vendas30d: 60 },
+  '35692': { estoqueAtual: 56, vendas30d: 60 },
+  '00009869': { estoqueAtual: 96, vendas30d: 180 },
+  '9836': { estoqueAtual: 96, vendas30d: 180 },
+  '00000984': { estoqueAtual: 84, vendas30d: 90 },
+  '1014': { estoqueAtual: 84, vendas30d: 90 },
+};
+
+const EXCEL_CODE_TO_INSUMO: Record<string, string> = {
+  '34': 'Vergalhão CA-50 10 mm',
+  '1379': 'Cimento CP II 50 kg',
+  '370': 'Areia média',
+  '4721': 'Brita 1',
+  '44457': 'Bloco cerâmico 9x19x39',
+  '37592': 'Bloco cerâmico 9x19x39 (furos verticais)',
+  '34353': 'Argamassa AC-II 20 kg',
+  '35692': 'Tinta acrílica 18 L',
+  '9836': 'Tubo PVC esgoto 100 mm',
+  '1014': 'Cabo flexível 2,5 mm²',
+};
+
+export function getSeedConfigByIdOrRecord(
+  id: string,
+  record?: Pick<SinapiMaterialRecord, 'id' | 'codigoSinapi' | 'insumo'>
+): StoreInventoryConfig | undefined {
+  if (record) {
+    return getInitialConfigForMaterial(record);
+  }
+  const mappedInsumo = EXCEL_CODE_TO_INSUMO[id];
+  const seed =
+    MATERIAL_SEEDS.find((s) => s.codigoSinapi === id) ??
+    (mappedInsumo
+      ? MATERIAL_SEEDS.find(
+          (s) => normalizeMaterialKey(s.insumo) === normalizeMaterialKey(mappedInsumo)
+        )
+      : undefined);
+  return seed ? { ...seed.defaultStore } : undefined;
+}
+
+export function isLegacyDefaultStock(materialId: string, estoqueAtual: number): boolean {
+  const legacy = LEGACY_INITIAL_STOCK_SALES[materialId];
+  return estoqueAtual === 60 || (legacy !== undefined && estoqueAtual === legacy.estoqueAtual);
+}
+
+export function isLegacyDefaultSales(materialId: string, vendas30d: number): boolean {
+  const legacy = LEGACY_INITIAL_STOCK_SALES[materialId];
+  return vendas30d === 120 || (legacy !== undefined && vendas30d === legacy.vendas30d);
 }
