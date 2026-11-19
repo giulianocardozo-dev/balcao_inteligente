@@ -399,25 +399,25 @@ export function SettingsScreen({
               <li className="flex items-start gap-2">
                 <span className="w-3 h-3 rounded-sm bg-[#B91C1C] dark:bg-red-400 shrink-0 mt-1" aria-hidden="true" />
                 <span>
-                  <strong className="text-[#B91C1C] dark:text-red-300">Atenção ao Estoque:</strong> Estoque baixo no pátio ou na prateleira. Avalie repor logo para não faltar ao cliente.
+                  <strong className="text-[#B91C1C] dark:text-red-300">Atenção ao Estoque:</strong> Estoque baixo no pátio ou na prateleira. Avalie repor logo para não faltar ao cliente, considerando a tendência de preço nos próximos 30 dias.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-3 h-3 rounded-sm bg-[#B45309] dark:bg-amber-400 shrink-0 mt-1" aria-hidden="true" />
                 <span>
-                  <strong className="text-[#B45309] dark:text-amber-300">Sinal de Alta:</strong> Estoque em dia, mas os dados apontam subida nos próximos 30 dias.
+                  <strong className="text-[#B45309] dark:text-amber-300">Sinal de Alta:</strong> Estoque em dia, mas os dados apontam tendência de aumento de preço nos próximos 30 dias.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-3 h-3 rounded-sm bg-[#15803D] dark:bg-emerald-400 shrink-0 mt-1" aria-hidden="true" />
                 <span>
-                  <strong className="text-[#15803D] dark:text-emerald-300">Sinal de Queda:</strong> Estoque confortável e preços dando sinal de baixa.
+                  <strong className="text-[#15803D] dark:text-emerald-300">Sinal de Queda:</strong> Estoque confortável e os dados apontam tendência de redução de preço nos próximos 30 dias.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-3 h-3 rounded-sm bg-[#1D4ED8] dark:bg-blue-400 shrink-0 mt-1" aria-hidden="true" />
                 <span>
-                  <strong className="text-[#1D4ED8] dark:text-blue-300">Mercado Estável:</strong> Estoque abastecido no pátio ou na prateleira e preços sem grandes mudanças recentes.
+                  <strong className="text-[#1D4ED8] dark:text-blue-300">Mercado Estável:</strong> Estoque abastecido no pátio ou na prateleira e os dados apontam tendência de estabilidade de preço nos próximos 30 dias.
                 </span>
               </li>
             </ul>

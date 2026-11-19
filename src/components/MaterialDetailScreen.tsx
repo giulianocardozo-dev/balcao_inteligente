@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import {
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
   Calculator,
   Check,
+  CircleDollarSign,
   ExternalLink,
   Minus,
   Newspaper,
@@ -164,7 +168,7 @@ export function MaterialDetailScreen({
             </div>
           </div>
           <div>
-            <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Projeção 45d</div>
+            <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Tendência $ 45 d</div>
             <div className={`text-[15px] font-extrabold font-num ${trendTextColor}`}>
               {formatPercentSigned(material.var45d)}
             </div>
@@ -188,7 +192,7 @@ export function MaterialDetailScreen({
               {meta.label}
             </div>
             <p className="text-[15px] font-semibold text-[#0F172A] dark:text-slate-100 mt-0.5 leading-snug">
-              {getStatusDescription(material.status, storageLocation)}
+              {getStatusDescription(material.status, storageLocation, material.tendencia)}
             </p>
           </div>
         </div>
@@ -229,7 +233,7 @@ export function MaterialDetailScreen({
           </div>
         </div>
 
-        <div className="mt-3 pt-2.5 border-t border-black/10 dark:border-white/15 text-[12.5px] font-bold text-[#334155] dark:text-slate-200 font-num leading-snug">
+        <div className="mt-3 pt-2.5 border-t border-black/10 dark:border-white/15 text-[12.5px] font-bold text-[#334155] dark:text-slate-200 font-num leading-snug text-center">
           Pedir de novo com{' '}
           <span className="font-extrabold text-[#0F172A] dark:text-slate-50">
             {formatQty(material.quandoPedirDeNovo)}{' '}
@@ -239,11 +243,6 @@ export function MaterialDetailScreen({
           Duração:{' '}
           <span className="font-extrabold text-[#0F172A] dark:text-slate-50">
             {material.diasQueDura >= 999 ? 'sem giro recente' : `~${formatDays(material.diasQueDura)}`}
-          </span>
-          <span className="mx-1.5 opacity-60" aria-hidden="true">·</span>
-          Em 3 meses:{' '}
-          <span className="font-extrabold text-[#0F172A] dark:text-slate-50">
-            {formatPercentSigned(material.var90d)}
           </span>
         </div>
       </section>

@@ -1,5 +1,5 @@
 import { AlertTriangle, Clock, TrendingDown, TrendingUp } from 'lucide-react';
-import { StorageLocation, TrafficLightStatus } from '../types/inventory';
+import { PriceTrend, StorageLocation, TrafficLightStatus } from '../types/inventory';
 
 export interface StatusMeta {
   status: TrafficLightStatus;
@@ -29,7 +29,8 @@ export const STATUS_META: Record<TrafficLightStatus, StatusMeta> = {
     status: 'ANTECIPAR_COMPRA',
     label: 'SINAL DE ALTA',
     shortLabel: 'Sinal de Alta',
-    description: 'Estoque em dia, mas os dados apontam subida nos próximos 30 dias.',
+    description:
+      'Estoque em dia, mas os dados apontam tendência de aumento de preço nos próximos 30 dias.',
     textColor: 'text-[#B45309] dark:text-amber-200',
     bgColor: 'bg-[#FEF3C7] dark:bg-amber-950/75',
     borderColor: 'border-[#FCD34D] dark:border-amber-600',
@@ -40,7 +41,8 @@ export const STATUS_META: Record<TrafficLightStatus, StatusMeta> = {
     status: 'NAO_COMPRAR',
     label: 'SINAL DE QUEDA',
     shortLabel: 'Sinal de Queda',
-    description: 'Estoque confortável e preços dando sinal de baixa.',
+    description:
+      'Estoque confortável e os dados apontam tendência de redução de preço nos próximos 30 dias.',
     textColor: 'text-[#15803D] dark:text-emerald-200',
     bgColor: 'bg-[#DCFCE7] dark:bg-emerald-950/75',
     borderColor: 'border-[#86EFAC] dark:border-emerald-700',
@@ -51,7 +53,8 @@ export const STATUS_META: Record<TrafficLightStatus, StatusMeta> = {
     status: 'AGUARDAR',
     label: 'MERCADO ESTÁVEL',
     shortLabel: 'Mercado Estável',
-    description: 'Pátio abastecido e preços sem grandes mudanças recentes.',
+    description:
+      'Pátio abastecido e os dados apontam tendência de estabilidade de preço nos próximos 30 dias.',
     textColor: 'text-[#1D4ED8] dark:text-blue-200',
     bgColor: 'bg-[#DBEAFE] dark:bg-blue-950/75',
     borderColor: 'border-[#93C5FD] dark:border-blue-700',
@@ -62,15 +65,27 @@ export const STATUS_META: Record<TrafficLightStatus, StatusMeta> = {
 
 export function getStatusDescription(
   status: TrafficLightStatus,
-  storage: StorageLocation = 'patio'
+  storage: StorageLocation = 'patio',
+  tendencia?: PriceTrend
 ): string {
-  if (storage === 'prateleira') {
-    if (status === 'COMPRAR_AGORA') {
-      return 'Prateleira baixa. Avalie repor logo para não faltar ao cliente.';
+  if (status === 'COMPRAR_AGORA') {
+    const base =
+      storage === 'prateleira'
+        ? 'Prateleira baixa. Avalie repor logo para não faltar ao cliente.'
+        : 'Pátio baixo. Avalie repor logo para não faltar ao cliente.';
+    if (tendencia === 'alta') {
+      return `${base} Os dados apontam tendência de aumento de preço nos próximos 30 dias.`;
     }
-    if (status === 'AGUARDAR') {
-      return 'Prateleira abastecida e preços sem grandes mudanças recentes.';
+    if (tendencia === 'queda') {
+      return `${base} Os dados apontam tendência de redução de preço nos próximos 30 dias.`;
     }
+    if (tendencia === 'estavel') {
+      return `${base} Os dados apontam tendência de estabilidade de preço nos próximos 30 dias.`;
+    }
+    return base;
+  }
+  if (storage === 'prateleira' && status === 'AGUARDAR') {
+    return 'Prateleira abastecida e os dados apontam tendência de estabilidade de preço nos próximos 30 dias.';
   }
   return STATUS_META[status].description;
 }
