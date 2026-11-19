@@ -438,7 +438,7 @@ export function MaterialDetailScreen({
           className="w-full min-h-[52px] px-4 py-3 rounded-2xl bg-[#2AB318] hover:bg-[#249c14] dark:bg-[#2AB318] dark:hover:bg-[#249c14] active:scale-[0.99] text-white font-extrabold text-[17px] flex items-center justify-center gap-2.5 transition-transform shadow-md"
         >
           <img src="/assets/aistudio/WA_801d73ea.png" alt="WhatsApp" className="w-6 h-6 shrink-0 rounded-sm object-contain" />
-          <span>Enviar pedido pro WhatsApp</span>
+          <span>Enviar pedido por WhatsApp</span>
         </button>
 
         <button
