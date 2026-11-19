@@ -11,5 +11,5 @@ if (splashEl) {
     window.setTimeout(() => {
       splashEl.remove();
     }, 340);
-  }, 1100);
+  }, 2400);
 }
