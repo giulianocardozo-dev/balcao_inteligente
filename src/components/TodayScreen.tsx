@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import {
   AlertTriangle,
-  ArrowDownRight,
   ArrowDownWideNarrow,
-  ArrowRight,
-  ArrowUpRight,
   ChevronRight,
   CircleDollarSign,
   Clock,
+  Minus,
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
@@ -356,29 +354,39 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                   />
                 </div>
 
-                <div className="mt-3 flex items-center justify-between gap-2">
+                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                   <StatusChip status={item.status} />
 
-                  <div className="min-w-0 text-right leading-tight">
-                    <div className="text-[12px] min-[400px]:text-[12.5px] font-bold font-num text-[#0F172A] dark:text-slate-50">
-                      {item.precoAtual > 0
-                        ? `Preço de Ref.: ${formatBRL(item.precoAtual)}`
-                        : 'Preço de Ref.: A definir'}
-                    </div>
-                    <div
-                      title="Tendência prevista de preço em 45 dias"
-                      className={`mt-0.5 inline-flex items-center justify-end gap-1 text-[12px] min-[400px]:text-[12.5px] font-bold font-num ${priceTrendTextColor}`}
-                    >
-                      <CircleDollarSign className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                      {isUp && <ArrowUpRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
-                      {isDown && <ArrowDownRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
-                      {!isUp && !isDown && <ArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+                  <div
+                    title="Preço de referência e tendência prevista em 45 dias"
+                    className="inline-flex items-center justify-end gap-1.5 text-right whitespace-nowrap ml-auto"
+                  >
+                    <span className="inline-flex items-center gap-1 text-[13px] min-[400px]:text-[13.5px] font-extrabold font-num text-[#0F172A] dark:text-slate-50">
+                      <CircleDollarSign
+                        className="w-[1em] h-[1em] text-[#475569] dark:text-slate-400 shrink-0"
+                        aria-hidden="true"
+                      />
                       <span>
-                        {isUp || isDown
-                          ? `${formatPercentSigned(item.var45d)} em 45d`
-                          : `Estável (${formatPercentSigned(item.var45d)})`}
+                        {item.precoAtual > 0 ? formatBRL(item.precoAtual) : 'A definir'}
                       </span>
-                    </div>
+                    </span>
+
+                    <span
+                      className="text-[#CBD5E1] dark:text-slate-600 font-bold select-none"
+                      aria-hidden="true"
+                    >
+                      ·
+                    </span>
+
+                    <span
+                      className={`inline-flex items-center gap-0.5 text-[12.5px] min-[400px]:text-[13px] font-extrabold font-num ${priceTrendTextColor}`}
+                    >
+                      {isUp && <TrendingUp className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+                      {isDown && <TrendingDown className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+                      {!isUp && !isDown && <Minus className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+                      <span>{formatPercentSigned(item.var45d)}</span>
+                      <span className="text-[11px] font-semibold opacity-80">45d</span>
+                    </span>
                   </div>
                 </div>
               </button>
