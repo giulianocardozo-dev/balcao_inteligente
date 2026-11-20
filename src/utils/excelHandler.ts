@@ -11,7 +11,7 @@ export interface ParsedExcelResult {
 
 export function isExcludedMaterial(codigoSinapi: string, insumo: string): boolean {
   const code = codigoSinapi.trim();
-  if (code === '00000032' || code === '00000337') {
+  if (code === '00000032' || code === '00000337' || code === '00034549' || code === '37592') {
     return true;
   }
   const normalized = insumo
@@ -23,6 +23,9 @@ export function isExcludedMaterial(codigoSinapi: string, insumo: string): boolea
     return true;
   }
   if (normalized.includes('arame recozido')) {
+    return true;
+  }
+  if (normalized.includes('bloco ceramico') && normalized.includes('furos verticais')) {
     return true;
   }
   return false;

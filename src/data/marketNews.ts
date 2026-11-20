@@ -35,7 +35,6 @@ export const MATERIAL_NCM_MAP: Record<string, string> = {
   '00000370': '2505.10.00', // Areia média
   '00004721': '2517.10.00', // Brita 1
   '00000731': '6904.10.00', // Bloco cerâmico 9x19x39
-  '00034549': '6904.10.00', // Bloco cerâmico 9x19x39 (furos verticais)
   '00001381': '3824.50.00', // Argamassa AC-II 20 kg
   '00007356': '3209.10.10', // Tinta acrílica 18 L
   '00009869': '3917.23.00', // Tubo PVC esgoto 100 mm

@@ -47,6 +47,9 @@
         opacity: 0;
         pointer-events: none;
       }
+      html.skip-splash #app-splash {
+        display: none !important;
+      }
       #app-splash .splash-center {
         display: flex;
         flex-direction: column;
@@ -96,6 +99,14 @@
         try {
           if (localStorage.getItem('balcao_inteligente_theme_v1') === 'dark') {
             document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+        try {
+          var splashKey = 'balcao_splash_shown_v1';
+          if (sessionStorage.getItem(splashKey) === '1') {
+            document.documentElement.classList.add('skip-splash');
+          } else {
+            sessionStorage.setItem(splashKey, '1');
           }
         } catch (e) {}
         window.__balcaoDeferredInstallPrompt = null;

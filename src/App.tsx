@@ -90,7 +90,7 @@ export default function App() {
       initialCachedForecast?.syncState ?? {
         source: 'fallback',
         updatedAtIso: new Date().toISOString(),
-        materialCount: 10,
+        materialCount: 9,
         ufCount: 27,
       }
   );
