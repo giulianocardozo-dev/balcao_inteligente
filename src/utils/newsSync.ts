@@ -5,8 +5,8 @@ import { isExcludedMaterial } from './excelHandler';
 export const NEWS_SYNC_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 horas
 
 export const NEWS_STORAGE_KEYS = {
-  ITEMS: 'balcao_inteligente_news_items_v1',
-  UPDATED_AT: 'balcao_inteligente_news_updated_v1',
+  ITEMS: 'balcao_inteligente_news_items_v2',
+  UPDATED_AT: 'balcao_inteligente_news_updated_v2',
 };
 
 export interface CachedNewsData {
@@ -107,6 +107,15 @@ export async function fetchSmartWebNews(options?: {
       signal: options?.signal,
     });
 
+    if (response.status === 404) {
+      const builtIn = getInitialNewsItems();
+      return {
+        ok: true,
+        items: builtIn,
+        updatedAtIso: new Date().toISOString(),
+      };
+    }
+
     const payload = (await response.json().catch(() => null)) as {
       ok?: boolean;
       degraded?: boolean;
@@ -116,6 +125,14 @@ export async function fetchSmartWebNews(options?: {
     } | null;
 
     if (!response.ok || !payload?.ok || !Array.isArray(payload.items)) {
+      const builtIn = getInitialNewsItems();
+      if (builtIn.length > 0) {
+        return {
+          ok: true,
+          items: builtIn,
+          updatedAtIso: new Date().toISOString(),
+        };
+      }
       return {
         ok: false,
         error:
