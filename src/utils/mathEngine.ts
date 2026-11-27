@@ -8,6 +8,45 @@ import {
   TrafficLightStatus,
 } from '../types/inventory';
 
+const SAO_PAULO_TZ = 'America/Sao_Paulo';
+
+export function getNextMonthYYYYMM(referenceDate: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: SAO_PAULO_TZ,
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(referenceDate);
+
+  const yearPart = parts.find((p) => p.type === 'year')?.value;
+  const monthPart = parts.find((p) => p.type === 'month')?.value;
+
+  const currentYear = yearPart ? Number(yearPart) : referenceDate.getFullYear();
+  const currentMonth = monthPart ? Number(monthPart) : referenceDate.getMonth() + 1;
+
+  const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+  const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+
+  return `${nextYear}-${String(nextMonth).padStart(2, '0')}`;
+}
+
+export function selectNextMonthForecastIndex(
+  previsoes: ForecastPoint[],
+  referenceDate: Date = new Date()
+): number {
+  if (previsoes.length === 0) return -1;
+  const nextMonth = getNextMonthYYYYMM(referenceDate);
+  const exactIdx = previsoes.findIndex((p) => p.month === nextMonth);
+  if (exactIdx >= 0) return exactIdx;
+
+  const nextOrAfterIdx = previsoes.findIndex(
+    (p) => /^\d{4}-\d{2}$/.test(p.month) && p.month >= nextMonth
+  );
+  if (nextOrAfterIdx >= 0) return nextOrAfterIdx;
+
+  const hasIsoMonths = previsoes.some((p) => /^\d{4}-\d{2}$/.test(p.month));
+  return hasIsoMonths ? previsoes.length - 1 : 0;
+}
+
 export function classifyTrend(var45d: number): PriceTrend {
   if (var45d >= 0.015) return 'alta';
   if (var45d <= -0.015) return 'queda';
@@ -16,26 +55,37 @@ export function classifyTrend(var45d: number): PriceTrend {
 
 export function evaluateMaterial(
   record: SinapiMaterialRecord,
-  config: StoreInventoryConfig
+  config: StoreInventoryConfig,
+  referenceDate: Date = new Date()
 ): EvaluatedMaterial {
   const lastHist = record.historico[record.historico.length - 1];
   const baseProjPrice = lastHist ? lastHist.price : 0;
 
-  const p1 = record.previsoes[0] ?? { month: '', prev: baseProjPrice, min: baseProjPrice, max: baseProjPrice };
-  const p2 = record.previsoes[1] ?? p1;
-  const p3 = record.previsoes[2] ?? p2;
+  const sortedPrevisoes = [...record.previsoes].sort((a, b) =>
+    a.month.localeCompare(b.month)
+  );
+  const fallbackPoint: ForecastPoint = {
+    month: '',
+    prev: baseProjPrice,
+    min: baseProjPrice,
+    max: baseProjPrice,
+  };
+  const targetIdx = selectNextMonthForecastIndex(sortedPrevisoes, referenceDate);
+  const targetForecast = targetIdx >= 0 ? sortedPrevisoes[targetIdx] : fallbackPoint;
+  const lastForecast =
+    sortedPrevisoes[sortedPrevisoes.length - 1] ?? targetForecast;
 
-  const proj45d = (p1.prev + p2.prev) / 2;
-  const projMin45d = (p1.min + p2.min) / 2;
-  const projMax45d = (p1.max + p2.max) / 2;
+  const proj45d = targetForecast.prev;
+  const projMin45d = targetForecast.min;
+  const projMax45d = targetForecast.max;
 
   const var45d = baseProjPrice > 0 ? proj45d / baseProjPrice - 1 : 0;
   const varMin45d = baseProjPrice > 0 ? projMin45d / baseProjPrice - 1 : 0;
   const varMax45d = baseProjPrice > 0 ? projMax45d / baseProjPrice - 1 : 0;
   const var90d =
     baseProjPrice > 0
-      ? p3.prev > 0
-        ? p3.prev / baseProjPrice - 1
+      ? lastForecast.prev > 0
+        ? lastForecast.prev / baseProjPrice - 1
         : record.varTrimestrePct / 100
       : 0;
 
@@ -147,13 +197,24 @@ export function computeReorderSimulation(params: {
 export function interpolateProjectedVariationPct(
   baseProjPrice: number,
   previsoes: ForecastPoint[],
-  daysAhead: number
+  daysAhead: number,
+  referenceDate: Date = new Date()
 ): number {
   if (baseProjPrice <= 0) return 0;
 
-  const v30 = previsoes[0] ? previsoes[0].prev / baseProjPrice - 1 : 0;
-  const v60 = previsoes[1] ? previsoes[1].prev / baseProjPrice - 1 : v30;
-  const v90 = previsoes[2] ? previsoes[2].prev / baseProjPrice - 1 : v60;
+  const sortedPrevisoes = [...previsoes].sort((a, b) =>
+    a.month.localeCompare(b.month)
+  );
+  const targetIdx = selectNextMonthForecastIndex(sortedPrevisoes, referenceDate);
+  const startIdx = targetIdx >= 0 ? targetIdx : 0;
+
+  const f1 = sortedPrevisoes[startIdx];
+  const f2 = sortedPrevisoes[startIdx + 1] ?? f1;
+  const f3 = sortedPrevisoes[startIdx + 2] ?? f2;
+
+  const v30 = f1 ? f1.prev / baseProjPrice - 1 : 0;
+  const v60 = f2 ? f2.prev / baseProjPrice - 1 : v30;
+  const v90 = f3 ? f3.prev / baseProjPrice - 1 : v60;
 
   const d = Math.max(0, Math.min(90, daysAhead));
   if (d <= 30) {

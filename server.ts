@@ -904,6 +904,27 @@ async function startServer() {
     }
   });
 
+  app.get('/api/telas-pptx', async (_req: Request, res: Response) => {
+    const candidates = [
+      path.resolve(process.cwd(), 'public', 'Balcao_Inteligente_Telas.pptx'),
+      path.resolve(process.cwd(), 'dist', 'Balcao_Inteligente_Telas.pptx'),
+    ];
+    const filePath = candidates.find((p) => fs.existsSync(p));
+    if (!filePath) {
+      res.status(404).json({ ok: false, error: 'Apresentação não encontrada.' });
+      return;
+    }
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="Balcao_Inteligente_Telas.pptx"'
+    );
+    res.sendFile(filePath);
+  });
+
   const httpServer = http.createServer(app);
 
   if (process.env.NODE_ENV !== 'production') {
