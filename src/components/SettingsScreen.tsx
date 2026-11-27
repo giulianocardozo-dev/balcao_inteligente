@@ -10,12 +10,13 @@ import {
   Mail,
   MapPin,
   Moon,
+  RefreshCw,
   Settings,
   Store,
   Sun,
   User,
 } from 'lucide-react';
-import { SubscriptionPlanId, UserProfile } from '../types/inventory';
+import { ForecastSyncSource, SubscriptionPlanId, UserProfile } from '../types/inventory';
 import { formatSyncTimestamp } from '../utils/forecastSync';
 import { PWAInstallButton } from './PWAInstallButton';
 
@@ -55,6 +56,10 @@ interface SettingsScreenProps {
   profile: UserProfile;
   onUpdateProfile: (patch: Partial<UserProfile>) => void;
   updatedAtIso: string;
+  syncSource: ForecastSyncSource;
+  forecastSyncing: boolean;
+  forecastSyncNotice: { type: 'info' | 'warn'; text: string } | null;
+  onRefreshForecast: () => void;
   selectedUf: string;
   availableUfs: string[];
   onSelectUf: (uf: string) => void;
@@ -69,6 +74,10 @@ export function SettingsScreen({
   profile,
   onUpdateProfile,
   updatedAtIso,
+  syncSource,
+  forecastSyncing,
+  forecastSyncNotice,
+  onRefreshForecast,
   selectedUf,
   availableUfs,
   onSelectUf,
@@ -197,10 +206,54 @@ export function SettingsScreen({
           />
         </div>
 
-        <p className="text-[12.5px] font-medium text-[#475569] dark:text-slate-300 font-num pt-0.5">
-          Base de dados de projeção de preços: Atualizado em:{' '}
-          {formatSyncTimestamp(updatedAtIso)}
-        </p>
+        <div className="pt-1 border-t border-[#E2E8F0] dark:border-slate-700 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[12.5px] font-bold text-[#334155] dark:text-slate-200 leading-snug">
+                Projeções de preços:{' '}
+                <span className="text-[#15803D] dark:text-emerald-300">
+                  {syncSource === 'github'
+                    ? 'GitHub (automático)'
+                    : syncSource === 'cache'
+                      ? 'Servidor local'
+                      : 'Base padrão'}
+                </span>
+              </p>
+              <p className="text-[12px] font-medium text-[#475569] dark:text-slate-300 font-num">
+                Atualizado em: {formatSyncTimestamp(updatedAtIso)}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onRefreshForecast}
+              disabled={forecastSyncing}
+              aria-label="Atualizar projeções de preços agora"
+              className="min-h-[40px] px-3 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 inline-flex items-center gap-1.5 text-[12.5px] font-bold text-[#0F172A] dark:text-slate-100 hover:border-[#94A3B8] dark:hover:border-slate-400 active:bg-[#E2E8F0] dark:active:bg-slate-700 disabled:opacity-60 shrink-0 focus-visible:outline-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400"
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 text-[#1D4ED8] dark:text-blue-300 shrink-0 ${
+                  forecastSyncing ? 'animate-spin' : ''
+                }`}
+                aria-hidden="true"
+              />
+              <span>{forecastSyncing ? 'Buscando...' : 'Atualizar'}</span>
+            </button>
+          </div>
+
+          {forecastSyncNotice && (
+            <div
+              role="status"
+              className={`px-3 py-2 rounded-xl text-[12.5px] font-bold border ${
+                forecastSyncNotice.type === 'info'
+                  ? 'bg-[#DCFCE7] dark:bg-emerald-950/80 border-[#86EFAC] dark:border-emerald-700 text-[#15803D] dark:text-emerald-200'
+                  : 'bg-[#FEF3C7] dark:bg-amber-950/80 border-[#FCD34D] dark:border-amber-600 text-[#B45309] dark:text-amber-200'
+              }`}
+            >
+              {forecastSyncNotice.text}
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Seção 2: Região e Aparência */}

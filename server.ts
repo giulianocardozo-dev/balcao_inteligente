@@ -845,9 +845,9 @@ function resolveGitHubForecastTargets(): {
   };
 }
 
-async function loadForecastWorkbook(): Promise<ForecastCacheEntry> {
+async function loadForecastWorkbook(force = false): Promise<ForecastCacheEntry> {
   const nowMs = Date.now();
-  if (forecastCache && nowMs - forecastCache.fetchedAtMs < FORECAST_CACHE_TTL_MS) {
+  if (!force && forecastCache && nowMs - forecastCache.fetchedAtMs < FORECAST_CACHE_TTL_MS) {
     if (forecastCache.source !== 'local') {
       return forecastCache;
     }
@@ -918,12 +918,15 @@ async function loadForecastWorkbook(): Promise<ForecastCacheEntry> {
             forecastCache = entry;
             return entry;
           }
+        } else {
+          console.warn(`[forecast] GitHub fetch returned HTTP ${res.status}; using local fallback.`);
         }
       } finally {
         clearTimeout(timeoutId);
       }
-    } catch {
-      // Fallback transparently to bundled local workbook below
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'unknown error';
+      console.warn(`[forecast] GitHub fetch failed (${msg}); using local fallback.`);
     }
 
     const [buffer, stat] = await Promise.all([
@@ -950,9 +953,10 @@ async function startServer() {
   const app = express();
   app.use(express.json());
 
-  app.get('/api/forecast', async (_req: Request, res: Response) => {
+  app.get('/api/forecast', async (req: Request, res: Response) => {
     try {
-      const entry = await loadForecastWorkbook();
+      const force = req.query.force === '1';
+      const entry = await loadForecastWorkbook(force);
       res.setHeader('Cache-Control', 'no-store');
       res.setHeader(
         'Content-Type',

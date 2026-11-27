@@ -102,14 +102,16 @@ export type FetchForecastResult =
   | { ok: false; reason: 'offline' | 'http' | 'parse' | 'aborted' };
 
 export async function fetchGitHubForecast(
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  force = false
 ): Promise<FetchForecastResult> {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
     return { ok: false, reason: 'offline' };
   }
 
   try {
-    const res = await fetch('/api/forecast', {
+    const endpoint = force ? '/api/forecast?force=1' : '/api/forecast';
+    const res = await fetch(endpoint, {
       method: 'GET',
       cache: 'no-store',
       signal,
@@ -119,10 +121,19 @@ export async function fetchGitHubForecast(
       return { ok: false, reason: 'http' };
     }
 
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      return { ok: false, reason: 'http' };
+    }
+
     const headerSource = res.headers.get('X-Forecast-Source');
     const headerUpdatedAt = res.headers.get('X-Forecast-Updated-At');
     const buffer = await res.arrayBuffer();
     const parsed = parseSinapiWorkbook(buffer);
+    if (parsed.records.length === 0) {
+      return { ok: false, reason: 'parse' };
+    }
+
     const nowIso = new Date().toISOString();
     const updatedAtIso =
       headerUpdatedAt && !Number.isNaN(Date.parse(headerUpdatedAt))

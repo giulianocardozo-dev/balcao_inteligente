@@ -164,6 +164,11 @@ export default function App() {
   const [iconError, setIconError] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoNotice, setGeoNotice] = useState<{ type: 'info' | 'warn'; text: string } | null>(null);
+  const [forecastSyncing, setForecastSyncing] = useState(false);
+  const [forecastSyncNotice, setForecastSyncNotice] = useState<{
+    type: 'info' | 'warn';
+    text: string;
+  } | null>(null);
 
   const manualOverrideRef = useRef<boolean>(
     (() => {
@@ -286,6 +291,12 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [geoNotice]);
 
+  useEffect(() => {
+    if (!forecastSyncNotice) return;
+    const timer = window.setTimeout(() => setForecastSyncNotice(null), 4500);
+    return () => window.clearTimeout(timer);
+  }, [forecastSyncNotice]);
+
   // Keep selectedUf valid if an imported Excel only contains certain UFs
   useEffect(() => {
     if (availableUfs.length > 0 && !availableUfs.includes(selectedUf)) {
@@ -326,7 +337,7 @@ export default function App() {
     }
   }, [userProfile]);
 
-  const runForecastSync = useCallback(async (force = false) => {
+  const runForecastSync = useCallback(async (force = false, isManual = false) => {
     if (syncInFlightRef.current) return;
     const nowMs = Date.now();
     if (!force && nowMs - lastSyncCheckMsRef.current < 60_000) {
@@ -335,22 +346,47 @@ export default function App() {
 
     syncInFlightRef.current = true;
     lastSyncCheckMsRef.current = nowMs;
+    if (isManual) {
+      setForecastSyncing(true);
+      setForecastSyncNotice(null);
+    }
     const controller = new AbortController();
 
     try {
-      const result = await fetchGitHubForecast(controller.signal);
+      const result = await fetchGitHubForecast(controller.signal, force);
       if (result.ok) {
         setRemoteRecords(result.records);
         setSyncState(result.syncState);
+        if (isManual) {
+          setForecastSyncNotice({
+            type: 'info',
+            text:
+              result.syncState.source === 'github'
+                ? 'Projeções sincronizadas com o GitHub.'
+                : 'Projeções atualizadas pela base local do servidor.',
+          });
+        }
       } else {
         const cached = readCachedForecast();
         if (cached) {
           setRemoteRecords(cached.records);
           setSyncState(cached.syncState);
         }
+        if (isManual && result.reason !== 'aborted') {
+          setForecastSyncNotice({
+            type: 'warn',
+            text:
+              result.reason === 'offline'
+                ? 'Sem internet no momento. Mantendo os últimos dados salvos.'
+                : 'Não foi possível buscar novas projeções agora. Tente novamente em instantes.',
+          });
+        }
       }
     } finally {
       syncInFlightRef.current = false;
+      if (isManual) {
+        setForecastSyncing(false);
+      }
     }
   }, []);
 
@@ -623,6 +659,12 @@ export default function App() {
               profile={userProfile}
               onUpdateProfile={handleUpdateProfile}
               updatedAtIso={syncState.updatedAtIso}
+              syncSource={syncState.source}
+              forecastSyncing={forecastSyncing}
+              forecastSyncNotice={forecastSyncNotice}
+              onRefreshForecast={() => {
+                void runForecastSync(true, true);
+              }}
               selectedUf={selectedUf}
               availableUfs={availableUfs}
               onSelectUf={(nextUf) => {
