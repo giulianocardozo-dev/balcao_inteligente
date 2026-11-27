@@ -130,6 +130,7 @@ interface ForecastCacheEntry {
   source: 'github' | 'local';
   updatedAtIso: string;
   fetchedAtMs: number;
+  localMtimeMs?: number;
 }
 
 let aiClient: GoogleGenAI | null = null;
@@ -803,7 +804,17 @@ async function getLatestNews(forceRefresh: boolean): Promise<NewsCacheEntry> {
 async function loadForecastWorkbook(): Promise<ForecastCacheEntry> {
   const nowMs = Date.now();
   if (forecastCache && nowMs - forecastCache.fetchedAtMs < FORECAST_CACHE_TTL_MS) {
-    return forecastCache;
+    if (forecastCache.source !== 'local') {
+      return forecastCache;
+    }
+    try {
+      const stat = await fs.promises.stat(LOCAL_FORECAST_XLSX_PATH);
+      if (stat.mtimeMs === forecastCache.localMtimeMs) {
+        return forecastCache;
+      }
+    } catch {
+      return forecastCache;
+    }
   }
 
   if (inFlightForecastFetch) {
@@ -850,6 +861,7 @@ async function loadForecastWorkbook(): Promise<ForecastCacheEntry> {
       source: 'local',
       updatedAtIso: stat.mtime.toISOString(),
       fetchedAtMs: Date.now(),
+      localMtimeMs: stat.mtimeMs,
     };
     forecastCache = entry;
     return entry;
