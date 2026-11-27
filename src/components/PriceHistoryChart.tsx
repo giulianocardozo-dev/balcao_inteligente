@@ -6,6 +6,7 @@ interface PriceHistoryChartProps {
   previsoes: ForecastPoint[];
   tendencia: PriceTrend;
   isDark?: boolean;
+  wide?: boolean;
 }
 
 export function PriceHistoryChart({
@@ -13,6 +14,7 @@ export function PriceHistoryChart({
   previsoes,
   tendencia,
   isDark = false,
+  wide = false,
 }: PriceHistoryChartProps) {
   const last12 = historico.slice(-12);
   if (last12.length === 0) return null;
@@ -46,12 +48,12 @@ export function PriceHistoryChart({
   const yMax = rawMax + pad;
   const ySpan = yMax - yMin || 0.01;
 
-  const width = 380;
-  const height = 180;
-  const padLeft = 10;
-  const padRight = 10;
-  const padTop = 10;
-  const padBottom = 30;
+  const width = wide ? 560 : 380;
+  const height = wide ? 220 : 180;
+  const padLeft = wide ? 14 : 10;
+  const padRight = wide ? 14 : 10;
+  const padTop = wide ? 12 : 10;
+  const padBottom = wide ? 32 : 30;
   const plotW = width - padLeft - padRight;
   const plotH = height - padTop - padBottom;
 

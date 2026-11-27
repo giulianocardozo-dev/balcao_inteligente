@@ -2,10 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Calculator,
   Home,
+  MapPin,
+  Moon,
   Newspaper,
   Package,
   Settings,
+  Sun,
 } from 'lucide-react';
+import { useViewportFormat } from './hooks/useViewportFormat';
 import {
   BRAZIL_UFS,
   buildDefaultSinapiDataset,
@@ -569,11 +573,362 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const viewport = useViewportFormat();
+  const isMobile = viewport.format === 'mobile';
+  const isHorizontalWorkspace =
+    viewport.format === 'tablet-landscape' || viewport.format === 'desktop';
+
+  const selectUfManually = (nextUf: string) => {
+    manualOverrideRef.current = true;
+    try {
+      localStorage.setItem(STORAGE_KEYS.UF_MANUAL, 'true');
+    } catch {
+      // ignore
+    }
+    setGeoNotice(null);
+    setSelectedUf(nextUf);
+  };
+
   const selectedStateName =
     BRAZIL_UFS.find((item) => item.uf === selectedUf)?.nome ?? selectedUf;
 
+  const navItems: Array<{
+    id: AppTab;
+    label: string;
+    sidebarLabel: string;
+    icon: typeof Home;
+  }> = [
+    { id: 'hoje', label: 'Hoje', sidebarLabel: 'Hoje', icon: Home },
+    { id: 'detalhe', label: 'Estoque', sidebarLabel: 'Estoque', icon: Package },
+    { id: 'simular', label: 'Calculadora', sidebarLabel: 'Calculadora', icon: Calculator },
+    { id: 'noticias', label: 'Notícias', sidebarLabel: 'Notícias', icon: Newspaper },
+    { id: 'config', label: 'Config.', sidebarLabel: 'Configurações', icon: Settings },
+  ];
+
+  const currentTabTitle =
+    activeTab === 'hoje'
+      ? 'Painel de Hoje'
+      : activeTab === 'detalhe'
+      ? activeMaterial?.record.insumo ?? 'Detalhes do Estoque'
+      : activeTab === 'simular'
+      ? 'Calculadora de Balcão'
+      : activeTab === 'noticias'
+      ? 'Notícias & Mercado'
+      : 'Configurações';
+
+  const mainContent = (
+    <>
+      {activeTab === 'hoje' && (
+        <>
+          <PWAInstallButton variant="banner" />
+          <TodayScreen
+            items={evaluatedItems}
+            onSelectMaterial={openMaterialDetail}
+            viewportFormat={viewport.format}
+          />
+        </>
+      )}
+
+      {activeTab === 'detalhe' && activeMaterial && (
+        <MaterialDetailScreen
+          material={activeMaterial}
+          allMaterials={evaluatedItems}
+          newsItems={newsItems}
+          onSelectMaterial={(id) => setSelectedMaterialId(id)}
+          onUpdateConfig={handleUpdateConfig}
+          onOpenSimulator={openSimulator}
+          isDark={isDark}
+          viewportFormat={viewport.format}
+        />
+      )}
+
+      {activeTab === 'simular' && (
+        <SimulateScreen
+          materials={evaluatedItems}
+          selectedMaterialId={selectedMaterialId}
+          onSelectMaterial={(id) => setSelectedMaterialId(id)}
+          viewportFormat={viewport.format}
+        />
+      )}
+
+      {activeTab === 'noticias' && (
+        <MarketNewsScreen
+          items={newsItems}
+          onOpenCalculator={openSimulator}
+          syncError={newsError}
+          viewportFormat={viewport.format}
+        />
+      )}
+
+      {activeTab === 'config' && (
+        <SettingsScreen
+          profile={userProfile}
+          onUpdateProfile={handleUpdateProfile}
+          updatedAtIso={syncState.updatedAtIso}
+          syncSource={syncState.source}
+          syncReason={syncState.reason}
+          forecastSyncing={forecastSyncing}
+          forecastSyncNotice={forecastSyncNotice}
+          onRefreshForecast={() => {
+            void runForecastSync(true, true);
+          }}
+          selectedUf={selectedUf}
+          availableUfs={availableUfs}
+          onSelectUf={selectUfManually}
+          onDetectUf={() => detectUserUf(true)}
+          geoLoading={geoLoading}
+          geoNotice={geoNotice}
+          isDark={isDark}
+          onToggleTheme={toggleTheme}
+          viewportFormat={viewport.format}
+        />
+      )}
+    </>
+  );
+
+  if (isHorizontalWorkspace) {
+    const isDesktop = viewport.format === 'desktop';
+    return (
+      <div
+        data-viewport-format={viewport.format}
+        data-orientation={viewport.orientation}
+        className="min-h-screen w-full flex bg-[#F1F5F9] dark:bg-slate-950 text-[#0F172A] dark:text-slate-50"
+      >
+        {/* Left Navigation Sidebar Rail */}
+        <aside
+          aria-label="Navegação lateral"
+          className={`sticky top-0 h-screen shrink-0 bg-white dark:bg-slate-900 border-r border-[#CBD5E1] dark:border-slate-700 flex flex-col justify-between ${
+            isDesktop ? 'w-[256px]' : 'w-[224px]'
+          }`}
+        >
+          <div className="flex flex-col flex-1 min-h-0">
+            {/* Brand & Store */}
+            <div className="px-4 py-4 border-b border-[#E2E8F0] dark:border-slate-800 space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                {iconError ? (
+                  <div
+                    aria-hidden="true"
+                    className="w-9 h-9 rounded-xl bg-[#0A2B66] text-white flex items-center justify-center font-brand text-[15px] shrink-0"
+                  >
+                    BI
+                  </div>
+                ) : (
+                  <img
+                    src="/assets/aistudio/icon-512_ff246861.png"
+                    alt="Balcão Inteligente"
+                    referrerPolicy="no-referrer"
+                    onError={() => setIconError(true)}
+                    className="w-9 h-9 rounded-xl object-contain shrink-0"
+                  />
+                )}
+                <h1 className="font-brand font-bold text-[20px] text-[#0F172A] dark:text-slate-50 leading-none tracking-tight whitespace-nowrap">
+                  Balcão Inteligente
+                </h1>
+              </div>
+
+              <div className="pt-1 border-t border-[#E2E8F0] dark:border-slate-800">
+                <div className="text-[13.5px] font-bold text-[#0F172A] dark:text-slate-100 truncate">
+                  {userProfile.storeName.trim() || 'Minha Loja'}
+                </div>
+                <div className="text-[12px] font-medium text-[#475569] dark:text-slate-300 truncate">
+                  {selectedStateName}
+                </div>
+              </div>
+            </div>
+
+            {/* Vertical Tabs */}
+            <nav aria-label="Navegação principal" className="p-3 space-y-1.5 flex-1 overflow-y-auto">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => switchTab(item.id)}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`w-full min-h-[46px] px-3.5 py-2.5 rounded-xl flex items-center gap-3 text-[14.5px] whitespace-nowrap shrink-0 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400 ${
+                      isActive
+                        ? 'bg-[#DCFCE7]/75 dark:bg-emerald-950/75 text-[#15803D] dark:text-emerald-200 border border-[#86EFAC] dark:border-emerald-700 font-extrabold'
+                        : 'text-[#334155] dark:text-slate-300 hover:bg-[#F8FAFC] dark:hover:bg-slate-800 hover:text-[#0F172A] dark:hover:text-slate-50 border border-transparent font-bold'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 shrink-0" aria-hidden="true" />
+                    <span>{item.sidebarLabel}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Bottom Sidebar Appearance Toggle */}
+          <div className="p-3 border-t border-[#E2E8F0] dark:border-slate-800">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-pressed={isDark}
+              className="w-full min-h-[44px] px-3.5 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 hover:border-[#94A3B8] dark:hover:border-slate-500 flex items-center justify-center gap-2 text-[13.5px] font-bold text-[#0F172A] dark:text-slate-100 whitespace-nowrap shrink-0 transition-colors"
+            >
+              {isDark ? (
+                <>
+                  <Sun className="w-4 h-4 text-amber-300 shrink-0" aria-hidden="true" />
+                  <span>Modo claro</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4 text-[#1D4ED8] shrink-0" aria-hidden="true" />
+                  <span>Modo escuro</span>
+                </>
+              )}
+            </button>
+          </div>
+        </aside>
+
+        {/* Main Right Workspace */}
+        <div className="flex-1 min-w-0 flex flex-col min-h-screen">
+          <header className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-[#CBD5E1] dark:border-slate-700 px-6 py-3 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <div className="text-[12px] font-bold text-[#475569] dark:text-slate-400 truncate">
+                {userProfile.storeName.trim() || 'Minha Loja'} · {selectedStateName}
+              </div>
+              <div className="text-[18px] font-extrabold text-[#0F172A] dark:text-slate-50 truncate leading-tight">
+                {currentTabTitle}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 shrink-0">
+              <div className="flex items-center gap-1.5 bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-xl px-2.5 h-[40px]">
+                <MapPin className="w-4 h-4 text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
+                <label htmlFor="desktop-uf-select" className="text-[12.5px] font-bold text-[#334155] dark:text-slate-300 whitespace-nowrap">
+                  UF:
+                </label>
+                <select
+                  id="desktop-uf-select"
+                  aria-label="Selecionar estado (UF)"
+                  value={selectedUf}
+                  onChange={(e) => selectUfManually(e.target.value)}
+                  className="bg-transparent text-[13.5px] font-extrabold text-[#0F172A] dark:text-slate-50 focus:outline-none pr-1 cursor-pointer"
+                >
+                  {availableUfs.map((uf) => (
+                    <option key={uf} value={uf} className="bg-white dark:bg-slate-900">
+                      {uf}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-1 w-full max-w-[1320px] mx-auto px-6 py-6">
+            {mainContent}
+          </main>
+        </div>
+
+        <OfflineIndicator viewportFormat={viewport.format} />
+      </div>
+    );
+  }
+
+  if (!isMobile) {
+    // Tablet em orientação vertical (tablet-portrait): contêiner ampliado + navegação horizontal no topo
+    return (
+      <div
+        data-viewport-format={viewport.format}
+        data-orientation={viewport.orientation}
+        className="min-h-screen w-full py-4 px-4 flex justify-center bg-[#F1F5F9] dark:bg-slate-950"
+      >
+        <div className="w-full max-w-[860px] min-h-[calc(100vh-2rem)] bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-700 rounded-3xl overflow-hidden flex flex-col relative">
+          <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-[#CBD5E1] dark:border-slate-700">
+            <div className="px-5 py-3 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                {iconError ? (
+                  <div
+                    aria-hidden="true"
+                    className="w-9 h-9 rounded-xl bg-[#0A2B66] text-white flex items-center justify-center font-brand text-[15px] shrink-0"
+                  >
+                    BI
+                  </div>
+                ) : (
+                  <img
+                    src="/assets/aistudio/icon-512_ff246861.png"
+                    alt="Balcão Inteligente"
+                    referrerPolicy="no-referrer"
+                    onError={() => setIconError(true)}
+                    className="w-9 h-9 rounded-xl object-contain shrink-0"
+                  />
+                )}
+                <h1 className="font-brand font-bold text-[22px] text-[#0F172A] dark:text-slate-50 leading-none tracking-tight whitespace-nowrap shrink-0">
+                  Balcão Inteligente
+                </h1>
+                <div className="w-px h-7 bg-[#CBD5E1] dark:bg-slate-700 shrink-0" aria-hidden="true" />
+                <div className="min-w-0 leading-tight">
+                  <div className="text-[13.5px] font-bold text-[#0F172A] dark:text-slate-100 truncate">
+                    {userProfile.storeName.trim() || 'Minha Loja'}
+                  </div>
+                  <div className="text-[11.5px] font-medium text-[#475569] dark:text-slate-300 truncate">
+                    {selectedStateName}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
+                className="min-h-[38px] px-3 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 inline-flex items-center gap-1.5 text-[12.5px] font-bold text-[#0F172A] dark:text-slate-100 whitespace-nowrap shrink-0"
+              >
+                {isDark ? (
+                  <Sun className="w-4 h-4 text-amber-300 shrink-0" aria-hidden="true" />
+                ) : (
+                  <Moon className="w-4 h-4 text-[#1D4ED8] shrink-0" aria-hidden="true" />
+                )}
+                <span>{isDark ? 'Claro' : 'Escuro'}</span>
+              </button>
+            </div>
+
+            <nav
+              aria-label="Navegação principal"
+              className="grid grid-cols-5 gap-1.5 px-4 py-2 bg-[#F8FAFC] dark:bg-slate-900/90 border-t border-[#E2E8F0] dark:border-slate-800"
+            >
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => switchTab(item.id)}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`min-h-[42px] px-2 rounded-xl flex items-center justify-center gap-2 text-[13.5px] whitespace-nowrap shrink-0 transition-colors ${
+                      isActive
+                        ? 'bg-[#DCFCE7]/80 dark:bg-emerald-950/75 text-[#15803D] dark:text-emerald-200 border border-[#86EFAC] dark:border-emerald-700 font-extrabold'
+                        : 'text-[#334155] dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 border border-transparent font-bold'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </header>
+
+          <main className="flex-1 px-5 py-5">
+            {mainContent}
+          </main>
+
+          <OfflineIndicator viewportFormat={viewport.format} />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen w-full md:py-4 flex justify-center bg-white md:bg-[#F1F5F9] dark:bg-slate-950 md:dark:bg-slate-950">
+    <div
+      data-viewport-format={viewport.format}
+      data-orientation={viewport.orientation}
+      className="min-h-screen w-full md:py-4 flex justify-center bg-white md:bg-[#F1F5F9] dark:bg-slate-950 md:dark:bg-slate-950"
+    >
       <div className="w-full max-w-[440px] min-h-screen md:min-h-[calc(100vh-2rem)] bg-white dark:bg-slate-900 md:border md:border-[#CBD5E1] dark:md:border-slate-700 md:rounded-3xl md:overflow-hidden flex flex-col relative">
         {/* Compact Single-Row Sticky Header */}
         <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-[#CBD5E1] dark:border-slate-700 px-4 py-2.5">
@@ -617,78 +972,10 @@ export default function App() {
 
         {/* Main Scrollable Content */}
         <main className="flex-1 px-4 pt-4 pb-24">
-          {activeTab === 'hoje' && (
-            <>
-              <PWAInstallButton variant="banner" />
-              <TodayScreen
-                items={evaluatedItems}
-                onSelectMaterial={openMaterialDetail}
-              />
-            </>
-          )}
-
-          {activeTab === 'detalhe' && activeMaterial && (
-            <MaterialDetailScreen
-              material={activeMaterial}
-              allMaterials={evaluatedItems}
-              newsItems={newsItems}
-              onSelectMaterial={(id) => setSelectedMaterialId(id)}
-              onUpdateConfig={handleUpdateConfig}
-              onOpenSimulator={openSimulator}
-              isDark={isDark}
-            />
-          )}
-
-          {activeTab === 'simular' && (
-            <SimulateScreen
-              materials={evaluatedItems}
-              selectedMaterialId={selectedMaterialId}
-              onSelectMaterial={(id) => setSelectedMaterialId(id)}
-            />
-          )}
-
-          {activeTab === 'noticias' && (
-            <MarketNewsScreen
-              items={newsItems}
-              onOpenCalculator={openSimulator}
-              syncError={newsError}
-            />
-          )}
-
-          {activeTab === 'config' && (
-            <SettingsScreen
-              profile={userProfile}
-              onUpdateProfile={handleUpdateProfile}
-              updatedAtIso={syncState.updatedAtIso}
-              syncSource={syncState.source}
-              syncReason={syncState.reason}
-              forecastSyncing={forecastSyncing}
-              forecastSyncNotice={forecastSyncNotice}
-              onRefreshForecast={() => {
-                void runForecastSync(true, true);
-              }}
-              selectedUf={selectedUf}
-              availableUfs={availableUfs}
-              onSelectUf={(nextUf) => {
-                manualOverrideRef.current = true;
-                try {
-                  localStorage.setItem(STORAGE_KEYS.UF_MANUAL, 'true');
-                } catch {
-                  // ignore
-                }
-                setGeoNotice(null);
-                setSelectedUf(nextUf);
-              }}
-              onDetectUf={() => detectUserUf(true)}
-              geoLoading={geoLoading}
-              geoNotice={geoNotice}
-              isDark={isDark}
-              onToggleTheme={toggleTheme}
-            />
-          )}
+          {mainContent}
         </main>
 
-        <OfflineIndicator />
+        <OfflineIndicator viewportFormat={viewport.format} />
 
         {/* Fixed Bottom Navigation */}
         <nav

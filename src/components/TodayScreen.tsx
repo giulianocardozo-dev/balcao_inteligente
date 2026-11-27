@@ -18,20 +18,31 @@ import {
   formatUnit,
   getStoragePrepositionCapitalized,
 } from '../utils/mathEngine';
+import { ViewportFormat } from '../hooks/useViewportFormat';
 import { ReferencePriceBanner } from './ReferencePriceBanner';
 import { STATUS_META, StatusChip } from './StatusVisuals';
 
 interface TodayScreenProps {
   items: EvaluatedMaterial[];
   onSelectMaterial: (materialId: string) => void;
+  viewportFormat?: ViewportFormat;
 }
 
 type TodayFilter = TrafficLightStatus | 'ECONOMIA' | 'ALL';
 type StockSortMode = 'default' | 'valor' | 'dias';
 
-export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
+export function TodayScreen({
+  items,
+  onSelectMaterial,
+  viewportFormat = 'mobile',
+}: TodayScreenProps) {
   const [filterStatus, setFilterStatus] = useState<TodayFilter>('ALL');
   const [stockSortMode, setStockSortMode] = useState<StockSortMode>('default');
+
+  const isMobile = viewportFormat === 'mobile';
+  const isHorizontalWorkspace =
+    viewportFormat === 'tablet-landscape' || viewportFormat === 'desktop';
+  const isDesktop = viewportFormat === 'desktop';
 
   const cycleStockSort = () => {
     setStockSortMode((prev) =>
@@ -79,24 +90,43 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
       {/* Alerta de Preços de Referência */}
       <ReferencePriceBanner items={items} onJumpToMaterial={onSelectMaterial} />
 
-      {/* Resumo do Semáforo (3 cards grandes lado a lado) */}
-      <section aria-label="Resumo do semáforo de compras">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-[16px] font-bold text-[#0F172A] dark:text-slate-50">
-            Decisões de hoje para seu estoque
-          </h2>
-          {filterStatus !== 'ALL' && (
-            <button
-              type="button"
-              onClick={() => setFilterStatus('ALL')}
-              className="text-[14px] font-bold text-[#1D4ED8] dark:text-blue-300 underline underline-offset-2 min-h-[36px] px-2"
-            >
-              Ver todos ({items.length})
-            </button>
-          )}
-        </div>
+      {/* Resumo Superior: horizontal 2 colunas em tablet paisagem e desktop */}
+      <div
+        className={
+          isHorizontalWorkspace
+            ? 'grid grid-cols-12 gap-5 items-stretch'
+            : 'space-y-5'
+        }
+      >
+        {/* Resumo do Semáforo */}
+        <section
+          aria-label="Resumo do semáforo de compras"
+          className={
+            isHorizontalWorkspace ? 'col-span-7 flex flex-col justify-between' : ''
+          }
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-[16px] font-bold text-[#0F172A] dark:text-slate-50">
+              Decisões de hoje para seu estoque
+            </h2>
+            {filterStatus !== 'ALL' && (
+              <button
+                type="button"
+                onClick={() => setFilterStatus('ALL')}
+                className="text-[14px] font-bold text-[#1D4ED8] dark:text-blue-300 underline underline-offset-2 min-h-[36px] px-2 whitespace-nowrap shrink-0"
+              >
+                Ver todos ({items.length})
+              </button>
+            )}
+          </div>
 
-        <div className="grid grid-cols-3 gap-2.5">
+          <div
+            className={
+              isDesktop && countAguardar > 0
+                ? 'grid grid-cols-4 gap-2.5 flex-1'
+                : 'grid grid-cols-3 gap-2.5'
+            }
+          >
           <button
             type="button"
             onClick={() => toggleFilter('COMPRAR_AGORA')}
@@ -165,42 +195,79 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
               </div>
             </div>
           </button>
-        </div>
+            {isDesktop && countAguardar > 0 && (
+              <button
+                type="button"
+                onClick={() => toggleFilter('AGUARDAR')}
+                aria-pressed={filterStatus === 'AGUARDAR'}
+                className={`text-left rounded-2xl p-3 border-2 transition-transform active:scale-[0.98] min-h-[112px] flex flex-col justify-between ${
+                  filterStatus === 'AGUARDAR'
+                    ? 'bg-[#DBEAFE] dark:bg-blue-950/85 border-[#1D4ED8] dark:border-blue-400 ring-2 ring-[#1D4ED8]/25 dark:ring-blue-400/40'
+                    : 'bg-[#F8FAFC] dark:bg-slate-800 border-[#CBD5E1] dark:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <Clock className="w-5 h-5 text-[#1D4ED8] dark:text-blue-300 shrink-0" aria-hidden="true" />
+                </div>
+                <div className="mt-1">
+                  <div className="text-[30px] leading-none font-extrabold text-[#1D4ED8] dark:text-blue-200 font-num">
+                    {countAguardar}
+                  </div>
+                  <div className="text-[12px] font-bold text-[#1D4ED8] dark:text-blue-200 mt-1 leading-tight">
+                    Mercado Estável
+                  </div>
+                </div>
+              </button>
+            )}
+          </div>
 
-        {countAguardar > 0 && (
-          <button
-            type="button"
-            onClick={() => toggleFilter('AGUARDAR')}
-            aria-pressed={filterStatus === 'AGUARDAR'}
-            className={`mt-2.5 w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-[14px] font-semibold transition-colors min-h-[48px] ${
-              filterStatus === 'AGUARDAR'
-                ? 'bg-[#DBEAFE] dark:bg-blue-950/85 border-[#1D4ED8] dark:border-blue-400 text-[#1D4ED8] dark:text-blue-100'
-                : 'bg-[#F8FAFC] dark:bg-slate-800 border-[#CBD5E1] dark:border-slate-700 text-[#334155] dark:text-slate-200'
-            }`}
-          >
-            <span className="inline-flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#1D4ED8] dark:text-blue-300" aria-hidden="true" />
-              <span>Mercado Estável</span>
-            </span>
-            <span className="font-extrabold text-[#1D4ED8] dark:text-blue-300 font-num">
-              {countAguardar} {countAguardar === 1 ? 'item' : 'itens'}
-            </span>
-          </button>
-        )}
-      </section>
+          {countAguardar > 0 && !isDesktop && (
+            <button
+              type="button"
+              onClick={() => toggleFilter('AGUARDAR')}
+              aria-pressed={filterStatus === 'AGUARDAR'}
+              className={`mt-2.5 w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-[14px] font-semibold transition-colors min-h-[48px] ${
+                filterStatus === 'AGUARDAR'
+                  ? 'bg-[#DBEAFE] dark:bg-blue-950/85 border-[#1D4ED8] dark:border-blue-400 text-[#1D4ED8] dark:text-blue-100'
+                  : 'bg-[#F8FAFC] dark:bg-slate-800 border-[#CBD5E1] dark:border-slate-700 text-[#334155] dark:text-slate-200'
+              }`}
+            >
+              <span className="inline-flex items-center gap-2">
+                <Clock className="w-4 h-4 text-[#1D4ED8] dark:text-blue-300" aria-hidden="true" />
+                <span>Mercado Estável</span>
+              </span>
+              <span className="font-extrabold text-[#1D4ED8] dark:text-blue-300 font-num">
+                {countAguardar} {countAguardar === 1 ? 'item' : 'itens'}
+              </span>
+            </button>
+          )}
+        </section>
 
-      {/* 2 KPIs Financeiros Simples */}
-      <section aria-label="Resumo financeiro do pátio" className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={cycleStockSort}
-          aria-pressed={stockSortMode !== 'default'}
-          className={`text-left rounded-2xl p-3.5 border-2 transition-transform active:scale-[0.98] flex flex-col justify-between focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400 ${
-            stockSortMode !== 'default'
-              ? 'bg-[#DBEAFE]/70 dark:bg-blue-950/85 border-[#1D4ED8] dark:border-blue-400 ring-2 ring-[#1D4ED8]/25 dark:ring-blue-400/40'
-              : 'bg-[#F8FAFC] dark:bg-slate-800 border-[#CBD5E1] dark:border-slate-700 hover:border-[#1D4ED8] dark:hover:border-blue-400'
-          }`}
+        {/* 2 KPIs Financeiros Simples */}
+        <section
+          aria-label="Resumo financeiro do pátio"
+          className={
+            isHorizontalWorkspace
+              ? 'col-span-5 flex flex-col justify-between'
+              : ''
+          }
         >
+          {isHorizontalWorkspace && (
+            <h2 className="text-[16px] font-bold text-[#0F172A] dark:text-slate-50 mb-2">
+              Resumo financeiro do pátio
+            </h2>
+          )}
+          <div className={`grid grid-cols-2 gap-3 ${isHorizontalWorkspace ? 'flex-1' : ''}`}>
+            <button
+              type="button"
+              onClick={cycleStockSort}
+              aria-pressed={stockSortMode !== 'default'}
+              className={`text-left rounded-2xl p-3.5 border-2 transition-transform active:scale-[0.98] flex flex-col justify-between focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400 ${
+                stockSortMode !== 'default'
+                  ? 'bg-[#DBEAFE]/70 dark:bg-blue-950/85 border-[#1D4ED8] dark:border-blue-400 ring-2 ring-[#1D4ED8]/25 dark:ring-blue-400/40'
+                  : 'bg-[#F8FAFC] dark:bg-slate-800 border-[#CBD5E1] dark:border-slate-700 hover:border-[#1D4ED8] dark:hover:border-blue-400'
+              }`}
+            >
           <div
             className={`text-[13px] font-semibold leading-snug ${
               stockSortMode !== 'default'
@@ -267,7 +334,9 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
             </div>
           </div>
         </button>
-      </section>
+          </div>
+        </section>
+      </div>
 
       {/* Lista Priorizada de Materiais */}
       <section aria-label="Lista priorizada de materiais">
@@ -299,7 +368,15 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
           </div>
         )}
 
-        <div className="space-y-3">
+        <div
+          className={
+            isMobile
+              ? 'space-y-3'
+              : isDesktop
+              ? 'grid grid-cols-2 xl:grid-cols-3 gap-4'
+              : 'grid grid-cols-2 gap-3.5'
+          }
+        >
           {visibleItems.map((item) => {
             const meta = STATUS_META[item.status];
             const isUp = item.tendencia === 'alta';
@@ -316,9 +393,11 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                 key={item.record.id}
                 type="button"
                 onClick={() => onSelectMaterial(item.record.id)}
-                className={`w-full text-left bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 border-l-[6px] ${meta.leftAccentColor} rounded-2xl p-4 transition-transform active:scale-[0.99] hover:border-[#94A3B8] dark:hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400`}
+                className={`w-full text-left bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 border-l-[6px] ${meta.leftAccentColor} rounded-2xl p-4 transition-transform active:scale-[0.99] hover:border-[#94A3B8] dark:hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] dark:focus-visible:outline-blue-400 ${
+                  isMobile ? '' : 'h-full flex flex-col justify-between'
+                }`}
               >
-                <div className="flex items-start justify-between gap-2">
+                <div className="w-full flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <h3 className="text-[17px] font-extrabold text-[#0F172A] dark:text-slate-50 leading-snug">
                       {item.record.insumo}
@@ -354,7 +433,7 @@ export function TodayScreen({ items, onSelectMaterial }: TodayScreenProps) {
                   />
                 </div>
 
-                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                <div className="w-full mt-2.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                   <StatusChip status={item.status} />
 
                   <div

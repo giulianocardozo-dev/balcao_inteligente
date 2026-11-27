@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { ForecastSyncSource, SubscriptionPlanId, UserProfile } from '../types/inventory';
 import { formatSyncTimestamp } from '../utils/forecastSync';
+import { ViewportFormat } from '../hooks/useViewportFormat';
 import { PWAInstallButton } from './PWAInstallButton';
 
 interface PlanOption {
@@ -69,6 +70,7 @@ interface SettingsScreenProps {
   geoNotice: { type: 'info' | 'warn'; text: string } | null;
   isDark: boolean;
   onToggleTheme: () => void;
+  viewportFormat?: ViewportFormat;
 }
 
 export function SettingsScreen({
@@ -88,12 +90,15 @@ export function SettingsScreen({
   geoNotice,
   isDark,
   onToggleTheme,
+  viewportFormat = 'mobile',
 }: SettingsScreenProps) {
   const [name, setName] = useState(profile.name);
   const [storeName, setStoreName] = useState(profile.storeName);
   const [email, setEmail] = useState(profile.email);
   const [planFeedback, setPlanFeedback] = useState<string | null>(null);
   const [showOrientation, setShowOrientation] = useState(false);
+
+  const isMobile = viewportFormat === 'mobile';
 
   useEffect(() => {
     setName(profile.name);
@@ -129,6 +134,8 @@ export function SettingsScreen({
         </h2>
       </div>
 
+      <div className={isMobile ? 'space-y-5' : 'grid grid-cols-12 gap-5 items-start'}>
+        <div className={isMobile ? 'space-y-5' : 'col-span-6 space-y-5'}>
       {/* Seção 1: Perfil do Usuário e da Loja */}
       <section
         aria-label="Perfil do usuário e da loja"
@@ -351,7 +358,9 @@ export function SettingsScreen({
 
       {/* Instalar aplicativo (Android, iOS e Windows) */}
       <PWAInstallButton variant="settings" />
+        </div>
 
+        <div className={isMobile ? 'space-y-5' : 'col-span-6 space-y-5'}>
       {/* Seção 3: Plano de Assinatura (Futuro) */}
       <section
         aria-label="Plano de assinatura"
@@ -496,6 +505,8 @@ export function SettingsScreen({
           </div>
         )}
       </section>
+        </div>
+      </div>
     </div>
   );
 }

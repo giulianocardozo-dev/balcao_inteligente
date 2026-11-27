@@ -23,6 +23,7 @@ import {
   getMaterialStorageLocation,
   getStoragePreposition,
 } from '../utils/mathEngine';
+import { ViewportFormat } from '../hooks/useViewportFormat';
 import { PriceHistoryChart } from './PriceHistoryChart';
 import { ReferencePriceBanner } from './ReferencePriceBanner';
 import { getStatusDescription, STATUS_META, StatusIcon } from './StatusVisuals';
@@ -35,6 +36,7 @@ interface MaterialDetailScreenProps {
   onUpdateConfig: (materialId: string, patch: Partial<StoreInventoryConfig>) => void;
   onOpenSimulator: (materialId: string) => void;
   isDark?: boolean;
+  viewportFormat?: ViewportFormat;
 }
 
 export function MaterialDetailScreen({
@@ -45,7 +47,12 @@ export function MaterialDetailScreen({
   onUpdateConfig,
   onOpenSimulator,
   isDark = false,
+  viewportFormat = 'mobile',
 }: MaterialDetailScreenProps) {
+  const isMobile = viewportFormat === 'mobile';
+  const isHorizontalWorkspace =
+    viewportFormat === 'tablet-landscape' || viewportFormat === 'desktop';
+  const isDesktop = viewportFormat === 'desktop';
   const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [whatsAppQtyInput, setWhatsAppQtyInput] = useState<string>('1');
@@ -169,58 +176,135 @@ export function MaterialDetailScreen({
         onJumpToMaterial={onSelectMaterial}
       />
 
-      {/* Quick material switcher */}
-      <div>
-        <select
-          aria-label="Trocar material"
-          value={record.id}
-          onChange={(e) => onSelectMaterial(e.target.value)}
-          className="w-full min-w-0 min-h-[48px] px-3 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 text-[15px] font-bold text-[#0F172A] dark:text-slate-50 truncate"
-        >
-          {allMaterials.map((item) => (
-            <option key={item.record.id} value={item.record.id}>
-              {item.record.insumo}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Material title & cost summary row */}
-      <div>
-        <h2 className="text-[22px] font-extrabold text-[#0F172A] dark:text-slate-50 leading-tight">
-          {record.insumo}
-        </h2>
-        <p className="text-[14px] font-medium text-[#334155] dark:text-slate-300 mt-0.5">
-          Unidade: <span className="font-bold text-[#0F172A] dark:text-slate-50">{record.unidadeComercial}</span>
-        </p>
-
-        <div className="mt-2.5 grid grid-cols-3 gap-2 pt-2.5 border-t border-[#E2E8F0] dark:border-slate-700">
+      {/* Quick material switcher + Material title & cost summary */}
+      {isMobile ? (
+        <>
           <div>
-            <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Preço de ref.</div>
-            <div
-              className={`text-[15px] font-extrabold font-num ${
-                hasRefPrice
-                  ? 'text-[#0F172A] dark:text-slate-50'
-                  : 'text-[#B45309] dark:text-amber-300'
-              }`}
+            <select
+              aria-label="Trocar material"
+              value={record.id}
+              onChange={(e) => onSelectMaterial(e.target.value)}
+              className="w-full min-w-0 min-h-[48px] px-3 rounded-xl bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 text-[15px] font-bold text-[#0F172A] dark:text-slate-50 truncate"
             >
-              {hasRefPrice ? formatBRL(config.custoMedio) : 'R$ 0,00'}
+              {allMaterials.map((item) => (
+                <option key={item.record.id} value={item.record.id}>
+                  {item.record.insumo}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <h2 className="text-[22px] font-extrabold text-[#0F172A] dark:text-slate-50 leading-tight">
+              {record.insumo}
+            </h2>
+            <p className="text-[14px] font-medium text-[#334155] dark:text-slate-300 mt-0.5">
+              Unidade: <span className="font-bold text-[#0F172A] dark:text-slate-50">{record.unidadeComercial}</span>
+            </p>
+
+            <div className="mt-2.5 grid grid-cols-3 gap-2 pt-2.5 border-t border-[#E2E8F0] dark:border-slate-700">
+              <div>
+                <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Preço de ref.</div>
+                <div
+                  className={`text-[15px] font-extrabold font-num ${
+                    hasRefPrice
+                      ? 'text-[#0F172A] dark:text-slate-50'
+                      : 'text-[#B45309] dark:text-amber-300'
+                  }`}
+                >
+                  {hasRefPrice ? formatBRL(config.custoMedio) : 'R$ 0,00'}
+                </div>
+              </div>
+              <div>
+                <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Total estoque</div>
+                <div className="text-[15px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num">
+                  {formatBRL(custoTotalEstoque)}
+                </div>
+              </div>
+              <div>
+                <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Tendência $ 45 d</div>
+                <div className={`text-[15px] font-extrabold font-num ${trendTextColor}`}>
+                  {formatPercentSigned(material.var45d)}
+                </div>
+              </div>
             </div>
           </div>
-          <div>
-            <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Total estoque</div>
-            <div className="text-[15px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num">
-              {formatBRL(custoTotalEstoque)}
+        </>
+      ) : (
+        <div className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl p-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-[24px] font-extrabold text-[#0F172A] dark:text-slate-50 leading-tight">
+                {record.insumo}
+              </h2>
+              <p className="text-[14px] font-medium text-[#334155] dark:text-slate-300 mt-0.5">
+                Unidade: <span className="font-bold text-[#0F172A] dark:text-slate-50">{record.unidadeComercial}</span>
+              </p>
+            </div>
+            <div className="w-full sm:w-[320px] lg:w-[360px] shrink-0">
+              <select
+                aria-label="Trocar material"
+                value={record.id}
+                onChange={(e) => onSelectMaterial(e.target.value)}
+                className="w-full min-w-0 min-h-[46px] px-3 rounded-xl bg-white dark:bg-slate-900 border border-[#CBD5E1] dark:border-slate-600 text-[14.5px] font-bold text-[#0F172A] dark:text-slate-50 truncate"
+              >
+                {allMaterials.map((item) => (
+                  <option key={item.record.id} value={item.record.id}>
+                    {item.record.insumo}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-          <div>
-            <div className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">Tendência $ 45 d</div>
-            <div className={`text-[15px] font-extrabold font-num ${trendTextColor}`}>
-              {formatPercentSigned(material.var45d)}
+
+          <div className="grid grid-cols-3 gap-4 pt-3 border-t border-[#E2E8F0] dark:border-slate-700">
+            <div>
+              <div className="text-[12.5px] font-semibold text-[#334155] dark:text-slate-300">Preço de ref.</div>
+              <div
+                className={`text-[17px] font-extrabold font-num ${
+                  hasRefPrice
+                    ? 'text-[#0F172A] dark:text-slate-50'
+                    : 'text-[#B45309] dark:text-amber-300'
+                }`}
+              >
+                {hasRefPrice ? formatBRL(config.custoMedio) : 'R$ 0,00'}
+              </div>
+            </div>
+            <div>
+              <div className="text-[12.5px] font-semibold text-[#334155] dark:text-slate-300">Total estoque</div>
+              <div className="text-[17px] font-extrabold text-[#0F172A] dark:text-slate-50 font-num">
+                {formatBRL(custoTotalEstoque)}
+              </div>
+            </div>
+            <div>
+              <div className="text-[12.5px] font-semibold text-[#334155] dark:text-slate-300">Tendência $ 45 d</div>
+              <div className={`text-[17px] font-extrabold font-num ${trendTextColor}`}>
+                {formatPercentSigned(material.var45d)}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Workspace de 2 colunas em tablet e desktop */}
+      <div
+        className={
+          isMobile
+            ? 'space-y-4'
+            : isHorizontalWorkspace
+            ? 'grid grid-cols-12 gap-5 items-start'
+            : 'space-y-4'
+        }
+      >
+        <div
+          className={
+            isHorizontalWorkspace
+              ? `${isDesktop ? 'col-span-5' : 'col-span-6'} space-y-4`
+              : viewportFormat === 'tablet-portrait'
+              ? 'grid grid-cols-2 gap-4 items-start'
+              : 'space-y-4'
+          }
+        >
 
       {/* Banner Grande do Semáforo */}
       <section
@@ -452,20 +536,70 @@ export function MaterialDetailScreen({
         </p>
       </section>
 
+      {isMobile ? null : (
+        /* Ações Principais no bloco esquerdo em tablet/desktop horizontal */
+        isHorizontalWorkspace && (
+          <section className="space-y-2.5 pt-1">
+            {copiedMsg && (
+              <div
+                role="status"
+                className="bg-[#DCFCE7] dark:bg-emerald-950/80 border border-[#86EFAC] dark:border-emerald-700 text-[#15803D] dark:text-emerald-200 rounded-2xl p-3.5 text-[15px] font-bold flex items-start gap-2.5"
+              >
+                <Check className="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true" />
+                <div>
+                  <div>Pedido pronto! Redirecionando para o WhatsApp:</div>
+                  <div className="text-[14px] font-medium text-[#0F172A] dark:text-slate-100 mt-1">
+                    "{copiedMsg}"
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={openWhatsAppModal}
+              className="w-full min-h-[52px] px-4 py-3 rounded-2xl bg-[#2AB318] hover:bg-[#249c14] dark:bg-[#2AB318] dark:hover:bg-[#249c14] active:scale-[0.99] text-white font-extrabold text-[17px] flex items-center justify-center gap-2.5 transition-transform shadow-md"
+            >
+              <img src="/assets/aistudio/WA_801d73ea.png" alt="WhatsApp" className="w-6 h-6 shrink-0 rounded-sm object-contain" />
+              <span>Enviar cotação por WhatsApp</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onOpenSimulator(record.id)}
+              className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-[#F8FAFC] dark:bg-slate-800 border-2 border-[#CBD5E1] dark:border-slate-700 hover:border-[#94A3B8] dark:hover:border-slate-500 active:scale-[0.99] text-[#0F172A] dark:text-slate-50 font-bold text-[16px] flex items-center justify-center gap-2 transition-transform"
+            >
+              <Calculator className="w-5 h-5 shrink-0 text-[#1D4ED8] dark:text-blue-300" aria-hidden="true" />
+              <span>Simular outro cenário</span>
+            </button>
+          </section>
+        )
+      )}
+        </div>
+
+        <div
+          className={
+            isHorizontalWorkspace
+              ? `${isDesktop ? 'col-span-7' : 'col-span-6'} space-y-4`
+              : 'space-y-4'
+          }
+        >
       {/* Gráfico Simples (SVG leve) */}
       <PriceHistoryChart
         historico={record.historico}
         previsoes={record.previsoes}
         tendencia={material.tendencia}
         isDark={isDark}
+        wide={!isMobile}
       />
 
-      {/* Ações Principais */}
-      <section className="space-y-2.5 pt-1">
+      {/* Ações Principais (mobile e tablet retrato) */}
+      {!isHorizontalWorkspace && (
+      <section className={viewportFormat === 'tablet-portrait' ? 'grid grid-cols-2 gap-3 pt-1' : 'space-y-2.5 pt-1'}>
         {copiedMsg && (
           <div
             role="status"
-            className="bg-[#DCFCE7] dark:bg-emerald-950/80 border border-[#86EFAC] dark:border-emerald-700 text-[#15803D] dark:text-emerald-200 rounded-2xl p-3.5 text-[15px] font-bold flex items-start gap-2.5"
+            className={`${viewportFormat === 'tablet-portrait' ? 'col-span-2 ' : ''}bg-[#DCFCE7] dark:bg-emerald-950/80 border border-[#86EFAC] dark:border-emerald-700 text-[#15803D] dark:text-emerald-200 rounded-2xl p-3.5 text-[15px] font-bold flex items-start gap-2.5`}
           >
             <Check className="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true" />
             <div>
@@ -495,6 +629,7 @@ export function MaterialDetailScreen({
           <span>Simular outro cenário</span>
         </button>
       </section>
+      )}
 
       {/* Notícias Recentes vinculadas ao NCM deste material */}
       {relatedNews.length > 0 && (
@@ -509,7 +644,13 @@ export function MaterialDetailScreen({
             </h3>
           </div>
 
-          <div className="space-y-2.5">
+          <div
+            className={
+              isMobile
+                ? 'space-y-2.5'
+                : 'grid grid-cols-1 xl:grid-cols-2 gap-3'
+            }
+          >
             {relatedNews.map((newsItem) => (
               <a
                 key={newsItem.id}
@@ -536,6 +677,8 @@ export function MaterialDetailScreen({
           </div>
         </section>
       )}
+        </div>
+      </div>
 
       {/* Pop-up de confirmação de quantidade para WhatsApp */}
       {showWhatsAppModal && (

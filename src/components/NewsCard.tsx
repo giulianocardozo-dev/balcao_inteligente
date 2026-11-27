@@ -14,6 +14,7 @@ interface NewsCardProps {
   item: MarketNewsItem;
   onOpenCalculator: (materialId: string) => void;
   compact?: boolean;
+  fillHeight?: boolean;
 }
 
 const SIGNAL_STYLES: Record<
@@ -64,15 +65,23 @@ function SignalIcon({ signal }: { signal: NewsSignal }) {
   }
 }
 
-export function NewsCard({ item, onOpenCalculator, compact = false }: NewsCardProps) {
+export function NewsCard({
+  item,
+  onOpenCalculator,
+  compact = false,
+  fillHeight = false,
+}: NewsCardProps) {
   const signalStyle = SIGNAL_STYLES[item.sinal];
   const dateLabel = formatNewsDateLabel(item.publishedAt);
 
   return (
     <article
       aria-label={item.titulo}
-      className="bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl p-4 space-y-3"
+      className={`bg-[#F8FAFC] dark:bg-slate-800 border border-[#CBD5E1] dark:border-slate-700 rounded-2xl p-4 ${
+        fillHeight ? 'h-full flex flex-col justify-between gap-3' : 'space-y-3'
+      }`}
     >
+      <div className="space-y-3">
       {/* Header do Card: Material + Fonte (link para a notícia) + Data */}
       <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12.5px] font-semibold text-[#334155] dark:text-slate-300 leading-snug">
         <span className="font-extrabold text-[#0F172A] dark:text-slate-100">
@@ -127,8 +136,10 @@ export function NewsCard({ item, onOpenCalculator, compact = false }: NewsCardPr
         </p>
       )}
 
+      </div>
+
       {/* Ação compacta para Calculadora */}
-      <div className="pt-1 flex justify-end border-t border-[#E2E8F0] dark:border-slate-700/80">
+      <div className="pt-2 flex justify-end border-t border-[#E2E8F0] dark:border-slate-700/80">
         <button
           type="button"
           onClick={() => onOpenCalculator(item.materialId)}
