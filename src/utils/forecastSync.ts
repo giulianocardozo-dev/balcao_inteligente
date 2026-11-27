@@ -71,6 +71,7 @@ export function readCachedForecast(): CachedForecastData | null {
       records: filtered,
       syncState: {
         source: syncState?.source === 'github' ? 'github' : 'cache',
+        reason: syncState?.reason,
         updatedAtIso: syncState?.updatedAtIso || new Date().toISOString(),
         lastCheckedIso: syncState?.lastCheckedIso,
         materialCount: materialSet.size,
@@ -126,12 +127,37 @@ export async function fetchGitHubForecast(
       return { ok: false, reason: 'http' };
     }
 
-    const headerSource = res.headers.get('X-Forecast-Source');
+    let headerSource = res.headers.get('X-Forecast-Source');
+    let headerReason = res.headers.get('X-Forecast-Reason') || undefined;
     const headerUpdatedAt = res.headers.get('X-Forecast-Updated-At');
     const buffer = await res.arrayBuffer();
     const parsed = parseSinapiWorkbook(buffer);
     if (parsed.records.length === 0) {
       return { ok: false, reason: 'parse' };
+    }
+
+    if (headerSource !== 'github') {
+      try {
+        const statusRes = await fetch('/api/forecast-status', {
+          method: 'GET',
+          cache: 'no-store',
+          signal,
+        });
+        if (statusRes.ok) {
+          const statusJson = (await statusRes.json()) as {
+            source?: string;
+            reason?: string;
+          };
+          if (statusJson.source) {
+            headerSource = statusJson.source;
+          }
+          if (statusJson.reason) {
+            headerReason = statusJson.reason;
+          }
+        }
+      } catch {
+        // Ignore status endpoint fallback failure
+      }
     }
 
     const nowIso = new Date().toISOString();
@@ -142,6 +168,7 @@ export async function fetchGitHubForecast(
 
     const syncState: ForecastSyncState = {
       source: headerSource === 'github' ? 'github' : 'cache',
+      reason: headerReason,
       updatedAtIso,
       lastCheckedIso: nowIso,
       materialCount: parsed.materialCount,

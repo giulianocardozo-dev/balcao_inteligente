@@ -57,6 +57,7 @@ interface SettingsScreenProps {
   onUpdateProfile: (patch: Partial<UserProfile>) => void;
   updatedAtIso: string;
   syncSource: ForecastSyncSource;
+  syncReason?: string;
   forecastSyncing: boolean;
   forecastSyncNotice: { type: 'info' | 'warn'; text: string } | null;
   onRefreshForecast: () => void;
@@ -75,6 +76,7 @@ export function SettingsScreen({
   onUpdateProfile,
   updatedAtIso,
   syncSource,
+  syncReason,
   forecastSyncing,
   forecastSyncNotice,
   onRefreshForecast,
@@ -222,6 +224,19 @@ export function SettingsScreen({
               <p className="text-[12px] font-medium text-[#475569] dark:text-slate-300 font-num">
                 Atualizado em: {formatSyncTimestamp(updatedAtIso)}
               </p>
+              {syncSource !== 'github' && syncReason && (
+                <p className="text-[11.5px] font-semibold text-[#B45309] dark:text-amber-300 leading-snug mt-0.5">
+                  {syncReason === 'token_missing'
+                    ? 'GITHUB_TOKEN não chegou ao ambiente publicado.'
+                    : syncReason === 'github_http_401' || syncReason === 'github_http_403'
+                      ? 'GitHub recusou o token de acesso (401/403).'
+                      : syncReason === 'github_http_404'
+                        ? 'Planilha ou repositório não encontrado no GitHub (404).'
+                        : syncReason === 'github_timeout'
+                          ? 'Tempo esgotado ao conectar no GitHub.'
+                          : `Fallback local (${syncReason}).`}
+                </p>
+              )}
             </div>
 
             <button

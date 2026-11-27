@@ -128,6 +128,7 @@ const TRACKED_MATERIALS: Array<{
 interface ForecastCacheEntry {
   buffer: Buffer;
   source: 'github' | 'local';
+  reason: string;
   updatedAtIso: string;
   fetchedAtMs: number;
   localMtimeMs?: number;
@@ -845,9 +846,20 @@ function resolveGitHubForecastTargets(): {
   };
 }
 
+function getCleanGitHubToken(): string {
+  return (
+    process.env.GITHUB_TOKEN?.trim()
+      .replace(/^["']|["']$/g, '')
+      .replace(/^Bearer\s+/i, '')
+      .trim() || ''
+  );
+}
+
 async function loadForecastWorkbook(force = false): Promise<ForecastCacheEntry> {
   const nowMs = Date.now();
-  if (!force && forecastCache && nowMs - forecastCache.fetchedAtMs < FORECAST_CACHE_TTL_MS) {
+  const effectiveTtlMs =
+    forecastCache?.source === 'local' ? 15 * 1000 : FORECAST_CACHE_TTL_MS;
+  if (!force && forecastCache && nowMs - forecastCache.fetchedAtMs < effectiveTtlMs) {
     if (forecastCache.source !== 'local') {
       return forecastCache;
     }
@@ -866,13 +878,14 @@ async function loadForecastWorkbook(force = false): Promise<ForecastCacheEntry> 
   }
 
   inFlightForecastFetch = (async () => {
-    const githubToken = process.env.GITHUB_TOKEN?.trim();
+    const githubToken = getCleanGitHubToken();
     const { apiUrl, rawUrl } = resolveGitHubForecastTargets();
     const fetchUrl = apiUrl ?? rawUrl;
+    let fallbackReason = githubToken ? 'github_unknown' : 'token_missing';
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       try {
         const headers: Record<string, string> = {
           'User-Agent': 'balcao-inteligente-server',
@@ -898,6 +911,7 @@ async function loadForecastWorkbook(force = false): Promise<ForecastCacheEntry> 
         if (res.status === 304 && forecastCache?.source === 'github') {
           forecastCache = {
             ...forecastCache,
+            reason: 'ok',
             fetchedAtMs: Date.now(),
           };
           return forecastCache;
@@ -911,6 +925,7 @@ async function loadForecastWorkbook(force = false): Promise<ForecastCacheEntry> 
             const entry: ForecastCacheEntry = {
               buffer,
               source: 'github',
+              reason: 'ok',
               updatedAtIso: new Date().toISOString(),
               fetchedAtMs: Date.now(),
               etag,
@@ -918,15 +933,24 @@ async function loadForecastWorkbook(force = false): Promise<ForecastCacheEntry> 
             forecastCache = entry;
             return entry;
           }
+          fallbackReason = 'github_empty';
         } else {
-          console.warn(`[forecast] GitHub fetch returned HTTP ${res.status}; using local fallback.`);
+          fallbackReason =
+            !githubToken && (res.status === 401 || res.status === 403 || res.status === 404)
+              ? 'token_missing'
+              : `github_http_${res.status}`;
+          console.warn(
+            `[forecast] GitHub fetch returned HTTP ${res.status} (${fallbackReason}); using local fallback.`
+          );
         }
       } finally {
         clearTimeout(timeoutId);
       }
     } catch (err) {
+      const isAbort = err instanceof Error && err.name === 'AbortError';
+      fallbackReason = isAbort ? 'github_timeout' : 'github_network_error';
       const msg = err instanceof Error ? err.message : 'unknown error';
-      console.warn(`[forecast] GitHub fetch failed (${msg}); using local fallback.`);
+      console.warn(`[forecast] GitHub fetch failed (${fallbackReason}: ${msg}); using local fallback.`);
     }
 
     const [buffer, stat] = await Promise.all([
@@ -936,6 +960,7 @@ async function loadForecastWorkbook(force = false): Promise<ForecastCacheEntry> 
     const entry: ForecastCacheEntry = {
       buffer,
       source: 'local',
+      reason: fallbackReason,
       updatedAtIso: stat.mtime.toISOString(),
       fetchedAtMs: Date.now(),
       localMtimeMs: stat.mtimeMs,
@@ -963,6 +988,7 @@ async function startServer() {
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       );
       res.setHeader('X-Forecast-Source', entry.source);
+      res.setHeader('X-Forecast-Reason', entry.reason);
       res.setHeader('X-Forecast-Updated-At', entry.updatedAtIso);
       res.send(entry.buffer);
     } catch (err) {
@@ -970,6 +996,25 @@ async function startServer() {
         err instanceof Error
           ? err.message
           : 'Planilha de projeções não encontrada no servidor.';
+      res.status(500).json({ ok: false, error: msg });
+    }
+  });
+
+  app.get('/api/forecast-status', async (req: Request, res: Response) => {
+    try {
+      const force = req.query.force === '1';
+      const entry = await loadForecastWorkbook(force);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({
+        ok: true,
+        source: entry.source,
+        reason: entry.reason,
+        hasTokenConfigured: Boolean(getCleanGitHubToken()),
+        updatedAtIso: entry.updatedAtIso,
+      });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Falha ao verificar projeções.';
       res.status(500).json({ ok: false, error: msg });
     }
   });

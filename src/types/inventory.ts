@@ -23,6 +23,7 @@ export type ForecastSyncSource = 'github' | 'cache' | 'fallback';
 
 export interface ForecastSyncState {
   source: ForecastSyncSource;
+  reason?: string;
   updatedAtIso: string;
   lastCheckedIso?: string;
   materialCount: number;

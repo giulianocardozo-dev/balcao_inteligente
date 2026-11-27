@@ -660,6 +660,7 @@ export default function App() {
               onUpdateProfile={handleUpdateProfile}
               updatedAtIso={syncState.updatedAtIso}
               syncSource={syncState.source}
+              syncReason={syncState.reason}
               forecastSyncing={forecastSyncing}
               forecastSyncNotice={forecastSyncNotice}
               onRefreshForecast={() => {
