@@ -100,14 +100,14 @@ export function saveCachedForecast(
 
 export type FetchForecastResult =
   | { ok: true; records: SinapiMaterialRecord[]; syncState: ForecastSyncState }
-  | { ok: false; reason: 'offline' | 'http' | 'parse' | 'aborted' };
+  | { ok: false; reason: 'offline' | 'http' | 'parse' | 'aborted'; detail?: string };
 
 export async function fetchGitHubForecast(
   signal?: AbortSignal,
   force = false
 ): Promise<FetchForecastResult> {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-    return { ok: false, reason: 'offline' };
+    return { ok: false, reason: 'offline', detail: 'offline' };
   }
 
   try {
@@ -119,21 +119,28 @@ export async function fetchGitHubForecast(
     });
 
     if (!res.ok) {
-      return { ok: false, reason: 'http' };
+      return { ok: false, reason: 'http', detail: `HTTP ${res.status}` };
     }
 
     const contentType = res.headers.get('content-type') || '';
     if (contentType.includes('text/html')) {
-      return { ok: false, reason: 'http' };
+      return { ok: false, reason: 'http', detail: 'Resposta HTML/login em vez de Excel' };
     }
 
     let headerSource = res.headers.get('X-Forecast-Source');
     let headerReason = res.headers.get('X-Forecast-Reason') || undefined;
     const headerUpdatedAt = res.headers.get('X-Forecast-Updated-At');
     const buffer = await res.arrayBuffer();
-    const parsed = parseSinapiWorkbook(buffer);
+
+    let parsed;
+    try {
+      parsed = parseSinapiWorkbook(buffer);
+    } catch {
+      return { ok: false, reason: 'parse', detail: 'Arquivo retornado não é um Excel válido' };
+    }
+
     if (parsed.records.length === 0) {
-      return { ok: false, reason: 'parse' };
+      return { ok: false, reason: 'parse', detail: 'Planilha sem registros válidos' };
     }
 
     if (headerSource !== 'github') {
@@ -181,6 +188,7 @@ export async function fetchGitHubForecast(
     if (err instanceof DOMException && err.name === 'AbortError') {
       return { ok: false, reason: 'aborted' };
     }
-    return { ok: false, reason: 'http' };
+    const detail = err instanceof Error && err.message ? err.message : 'Erro de rede';
+    return { ok: false, reason: 'http', detail };
   }
 }

@@ -373,12 +373,13 @@ export default function App() {
           setSyncState(cached.syncState);
         }
         if (isManual && result.reason !== 'aborted') {
+          const suffix = result.detail ? ` (${result.detail})` : '';
           setForecastSyncNotice({
             type: 'warn',
             text:
               result.reason === 'offline'
                 ? 'Sem internet no momento. Mantendo os últimos dados salvos.'
-                : 'Não foi possível buscar novas projeções agora. Tente novamente em instantes.',
+                : `Não foi possível buscar novas projeções agora${suffix}.`,
           });
         }
       }
