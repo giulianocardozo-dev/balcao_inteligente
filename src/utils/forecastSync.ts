@@ -118,6 +118,54 @@ export async function fetchGitHubForecast(
       signal,
     });
 
+    if (res.status === 404) {
+      const directRes = await fetch(GITHUB_FORECAST_RAW_URL, {
+        method: 'GET',
+        cache: 'no-store',
+        signal,
+      });
+
+      if (!directRes.ok) {
+        return {
+          ok: false,
+          reason: 'http',
+          detail:
+            directRes.status === 404
+              ? 'Link publicado é estático (/api 404) e o repositório no GitHub está privado'
+              : `GitHub direto HTTP ${directRes.status}`,
+        };
+      }
+
+      const directType = directRes.headers.get('content-type') || '';
+      if (directType.includes('text/html')) {
+        return { ok: false, reason: 'http', detail: 'GitHub retornou HTML em vez de Excel' };
+      }
+
+      const directBuffer = await directRes.arrayBuffer();
+      let directParsed;
+      try {
+        directParsed = parseSinapiWorkbook(directBuffer);
+      } catch {
+        return { ok: false, reason: 'parse', detail: 'Arquivo do GitHub não é um Excel válido' };
+      }
+
+      if (directParsed.records.length === 0) {
+        return { ok: false, reason: 'parse', detail: 'Planilha do GitHub sem registros válidos' };
+      }
+
+      const nowIso = new Date().toISOString();
+      const syncState: ForecastSyncState = {
+        source: 'github',
+        reason: 'ok',
+        updatedAtIso: nowIso,
+        lastCheckedIso: nowIso,
+        materialCount: directParsed.materialCount,
+        ufCount: directParsed.ufs.length,
+      };
+      saveCachedForecast(directParsed.records, syncState);
+      return { ok: true, records: directParsed.records, syncState };
+    }
+
     if (!res.ok) {
       return { ok: false, reason: 'http', detail: `HTTP ${res.status}` };
     }
