@@ -44,10 +44,10 @@ interface NewsCacheEntry {
 const PORT = Number(process.env.PORT) || 3000;
 const NEWS_CACHE_TTL_MS = 4 * 60 * 60 * 1000; // 4 horas
 const NEWS_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutos entre retentativas após erro/cota
-const FORECAST_CACHE_TTL_MS = 8 * 60 * 60 * 1000; // 8 horas
+const FORECAST_CACHE_TTL_MS = 60 * 1000; // 1 minuto (com revalidação ETag no GitHub)
 const SAO_PAULO_TZ = 'America/Sao_Paulo';
-const GITHUB_FORECAST_RAW_URL =
-  'https://raw.githubusercontent.com/giulianocardozo-dev/balcao_inteligente/main/balcao%20inteligente%20181126%20projecao.xlsx';
+const DEFAULT_GITHUB_FORECAST_URL =
+  'https://github.com/giulianocardozo-dev/balcao_inteligente/blob/main/balcao%20inteligente%20181126%20projecao.xlsx';
 const LOCAL_FORECAST_XLSX_PATH = path.resolve(
   process.cwd(),
   'balcao inteligente 181126 projecao.xlsx'
@@ -131,6 +131,7 @@ interface ForecastCacheEntry {
   updatedAtIso: string;
   fetchedAtMs: number;
   localMtimeMs?: number;
+  etag?: string;
 }
 
 let aiClient: GoogleGenAI | null = null;
@@ -801,6 +802,49 @@ async function getLatestNews(forceRefresh: boolean): Promise<NewsCacheEntry> {
   return inFlightNewsFetch;
 }
 
+function resolveGitHubForecastTargets(): {
+  apiUrl: string | null;
+  rawUrl: string;
+} {
+  const configured =
+    process.env.GITHUB_FORECAST_URL?.trim() || DEFAULT_GITHUB_FORECAST_URL;
+
+  const blobMatch = configured.match(
+    /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/
+  );
+  if (blobMatch) {
+    const [, owner, repo, branch, filePath] = blobMatch;
+    const encodedPath = filePath
+      .split('/')
+      .map((seg) => encodeURIComponent(decodeURIComponent(seg)))
+      .join('/');
+    return {
+      apiUrl: `https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`,
+      rawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${encodedPath}`,
+    };
+  }
+
+  const rawMatch = configured.match(
+    /^https?:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)$/
+  );
+  if (rawMatch) {
+    const [, owner, repo, branch, filePath] = rawMatch;
+    const encodedPath = filePath
+      .split('/')
+      .map((seg) => encodeURIComponent(decodeURIComponent(seg)))
+      .join('/');
+    return {
+      apiUrl: `https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`,
+      rawUrl: configured,
+    };
+  }
+
+  return {
+    apiUrl: null,
+    rawUrl: configured,
+  };
+}
+
 async function loadForecastWorkbook(): Promise<ForecastCacheEntry> {
   const nowMs = Date.now();
   if (forecastCache && nowMs - forecastCache.fetchedAtMs < FORECAST_CACHE_TTL_MS) {
@@ -822,24 +866,54 @@ async function loadForecastWorkbook(): Promise<ForecastCacheEntry> {
   }
 
   inFlightForecastFetch = (async () => {
+    const githubToken = process.env.GITHUB_TOKEN?.trim();
+    const { apiUrl, rawUrl } = resolveGitHubForecastTargets();
+    const fetchUrl = apiUrl ?? rawUrl;
+
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       try {
-        const res = await fetch(GITHUB_FORECAST_RAW_URL, {
+        const headers: Record<string, string> = {
+          'User-Agent': 'balcao-inteligente-server',
+        };
+        if (apiUrl) {
+          headers.Accept = 'application/vnd.github.raw+json';
+          headers['X-GitHub-Api-Version'] = '2022-11-28';
+        }
+        if (githubToken) {
+          headers.Authorization = `Bearer ${githubToken}`;
+        }
+        if (forecastCache?.source === 'github' && forecastCache.etag) {
+          headers['If-None-Match'] = forecastCache.etag;
+        }
+
+        const res = await fetch(fetchUrl, {
           method: 'GET',
           cache: 'no-store',
+          headers,
           signal: controller.signal,
         });
+
+        if (res.status === 304 && forecastCache?.source === 'github') {
+          forecastCache = {
+            ...forecastCache,
+            fetchedAtMs: Date.now(),
+          };
+          return forecastCache;
+        }
+
         if (res.ok) {
           const arrayBuf = await res.arrayBuffer();
           const buffer = Buffer.from(arrayBuf);
           if (buffer.byteLength > 0) {
+            const etag = res.headers.get('etag') ?? undefined;
             const entry: ForecastCacheEntry = {
               buffer,
               source: 'github',
               updatedAtIso: new Date().toISOString(),
               fetchedAtMs: Date.now(),
+              etag,
             };
             forecastCache = entry;
             return entry;

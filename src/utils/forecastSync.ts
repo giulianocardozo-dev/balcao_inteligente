@@ -16,7 +16,7 @@ export function toRawGitHubUrl(url: string): string {
 }
 
 export const GITHUB_FORECAST_RAW_URL = toRawGitHubUrl(GITHUB_FORECAST_BLOB_URL);
-export const FORECAST_SYNC_INTERVAL_MS = 8 * 60 * 60 * 1000; // 8 horas
+export const FORECAST_SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
 
 export const FORECAST_STORAGE_KEYS = {
   RECORDS: 'balcao_inteligente_records_v1',
